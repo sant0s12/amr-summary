@@ -1,6 +1,8 @@
 README.pdf
 img/
+*.pdf
 *.log
 *.aux
 *.fdb_latexmk
 *.synctex.gz
+*.fls
