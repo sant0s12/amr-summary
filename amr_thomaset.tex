@@ -1,0 +1,2327 @@
+\documentclass[fontsize=6pt]{scrartcl}
+\usepackage[blue,bold,english,i]{mszf}
+
+\input{./mspreamble}
+
+\usepackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault}
+% smaller sub/super scripts
+\DeclareMathSizes{6}{6}{4}{4}
+
+\usepackage{cancel}
+\usepackage{tabularx}
+\usepackage{csquotes}
+\usepackage{soul}
+\usepackage[percent]{overpic}
+\usepackage[vlined]{algorithm2e}
+
+\newcommand{\mat}[1]{\mathbf{#1}}
+\renewcommand{\exp}[1]{e^{#1}}
+\pagenumbering{gobble}
+
+\thinmuskip=3mu minus 3mu
+\medmuskip=4mu plus 2mu minus 4mu
+\thickmuskip=5mu plus 5mu minus 4mu
+
+\DeclareMathOperator{\vdts}					% <---------- Correct sized dots for matrices in small font environment
+	{\resizebox{!}{8pt}{$\vdots$}}				%		   
+\DeclareMathOperator{\ddts}					%
+	{\resizebox{!}{8pt}{$\ddots$}}				%
+\DeclareMathOperator{\cdts}					%
+	{\resizebox{6.5pt}{!}{\raisebox{2pt}{$\cdots$}}}	%
+\DeclareMathOperator{\hdts}					%
+	{\resizebox{6.5pt}{!}{$\hdots$}\,}			%
+
+\begin{document}
+
+\raggedcolumns
+\setlength{\abovedisplayskip}{4.0pt plus 2.0pt minus 2.0pt}
+\setlength{\belowdisplayskip}{4.0pt plus 2.0pt minus 2.0pt}
+
+\begin{multicols*}{4}
+
+\section*{See-Think-Act Cycle}
+
+{\centering
+\includegraphics[width=0.8\columnwidth]{img/see-think-act}
+\par}
+
+To move a robot: model of environment, perceive and analyze the environment, find its position, plan and execute movement
+
+\section*{Locomotion Concepts}
+
+\begin{itemize}
+	\item \textbf{Locomotion}:  physical interaction between vehicle \& environment (interaction forces, mechanisms and actuators that generate them)
+	\item \textbf{Stability}:  implementation aspects
+	\item \textbf{Contact characteristics}:  point or area, angle of contact, friction
+	\item \textbf{Environment}:  structure, medium (water, air, soft/hard ground)
+	\item \textbf{Implementation aspects}:  number of actuators, structural complexity, control expense, energy efficiency on different terrain
+\end{itemize}
+
+\subsection*{Principles found in Nature}
+{\centering
+	\includegraphics[width=0.7\columnwidth]{img/principles_nature}
+\par}
+
+Walking: center of gravity is moved up and down.
+
+\subsection*{Legged Robotics}
+\begin{itemize}
+	\item Legged Systems can overcome obstacles not reachable by wheeled systems
+	\begin{itemize}
+		\item Many DoF must be controlled in a coordinated way
+		\item Robot must see detailed elements of the terrain
+	\end{itemize}
+	\item Fewer legs $\Rightarrow$ more complicated locomotion
+	\item \textbf{Stability:} Point Contact requires at least3legs for 
+		  static stability, Surface Contact requires at least 1 leg
+\end{itemize}
+
+\subsubsection*{Joints and Degree of Freedom}
+
+\begin{minipage}{0.69\linewidth}
+	\begin{itemize}
+		\item Minimumof 2 DoF required to move leg forward: Lift and Swing motion.
+			  Sliding-freemotion in more than one direction is not possible
+		\item Usually 3 DoF for each leg. 4 DoF might improve walking and stability
+		\item Additional joint (DoF) increases complexity of design and of locomotion control
+	\end{itemize}
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+	\includegraphics[width=\linewidth]{img/leg}
+\end{minipage}
+
+\subsubsection*{Events (Gaits)}
+\begin{itemize}
+	\item Gait is characterized as the distinct sequence of lift and release events
+		  of the individual legs and depends on number of legs
+	\item Number of possible events $N$ for walking machine with $k$ legs:\\ $N = (2k - 1)!$
+\end{itemize}
+
+\subsubsection*{Static Locomotion}
+\begin{itemize}
+	\item At least 4 or 6 legs are required for static walking. Most obvious natural gaits
+		  with 6 legs are static
+	\item Gait Execution: Body weight supported by $\geq$ 3 legs, move one foot at the time,
+		  center of gravity (CoG) shifted between support polygons
+	\item Gait Characteristics:system statically stable (does not fall if stopped moving),
+		  well-suited for climbing, slow and energetically inefficient
+\end{itemize}
+\textbf{Inverted Pendulum}
+\begin{itemize}
+	\item Static walking can be represented by inverted pendulum
+	\item Exploit passive dynamic walker $\Rightarrow$ energetically very efficient!
+	\item \textbf{Biped Walking:} 2 legs, gait comparable to a rolling polygon with
+		  side-lengths equal to length of step. Work against gravity is required
+	  \item \textbf{Passive Dynamic Walker:} forward falling combined with passive leg swing
+\end{itemize}
+\textbf{Effifiency:} $c_{mt} = \frac{|\text{mech. energy}|}{|\text{weight} * \text{distance}|}$
+
+\subsubsection*{Dynamic Locomotion}
+\begin{itemize}
+	\item \textbf{Gait Execution:} Body weight supported by < 3legs, move multiple
+		  feet at the same time, robot balanced on a step-to-step basis
+	\item \textbf{Gait Characteristics:} System statically unstable (falls over if
+		  stopped moving), only stabilized on Limit Cycle, well suited for fast motion,
+		  fast and energeti-cally efficient, demanding for actuation and control
+	\item Most obvious natural gaits with 4legs are dynamic
+\end{itemize}
+\textbf{Spring-Loaded Inverted Pendulum (SLIP)}
+\begin{itemize}
+	\item Dynamic/Complex walking can be described with SLIP
+	\item Is robust against collisions and uncertainty, can store energy, reduce peak power
+\end{itemize}
+
+\textbf{Quadrupedal Robots}
+\begin{itemize}
+	\item Point feet: Low mechanical complexity, high robustness (no actuators in feet)
+	\item 3 DoF per leg: Minimal number of actuators, no redundancy $Rightarrow$ best trade-off
+		  between static and dynamic gaits
+\end{itemize}
+
+\subsubsection*{Locomotion Control}
+\begin{enumerate}
+	\item Stepping Sequence: Defined by gait pattern (static walk, dynamic trot, gallop)
+	\item Stepping Location $\Leftrightarrow$ Kinematics: Propel robot forward and maintain stability,
+		  react to terrain elevation or cross obstacles
+	\item Contact force distribution $\Leftrightarrow$ Dynamics: Compensate gravity
+		  and accelerate main body, ensure contact stability and optimize energetic efficiency
+\end{enumerate}
+
+\subsection*{Gait Stability}
+\subsubsection*{Periodic Dynamic Systems}
+ODE: $\dot{x} = f(t,x) \Rightarrow x(t') = x_0 + \int_0^{t'}f(t,x)dt$\\
+\textbf{Periodic System}: $f(t+T, x)=f(t,x)$\\
+\textbf{Example:} $\dot{x} = -x + 2\cos(t) \Rightarrow x_0 = 1$, $x(2\pi) = 1\Rightarrow$
+\textbf{Stable limit cycle}, $T=2\pi$\\
+\textbf{Solution:} $x(t,x_0)=\exp{-t}(x_0-1)+\cos(t)+\sin(t)$
+
+\subsubsection*{Poincaré Maps}
+\resizebox{\linewidth}{!}{Map endpoint of succ. cycles: $P(x_0) = x(T) = x_1$,
+with $x^*$ \textbf{stable cycle:} $P(x^*)=x^*$}
+\resizebox{\linewidth}{!}{Iterative consideration: $x((k+1)T) = P(x(kT))$ and
+$x(kT) = P(P(...P(x_0)))$}
+\textbf{Example above:} $P(x_0) = x(2\pi, x_0) = \exp{-2\pi}x_0 + 1 -
+\exp{-2\pi}$\\
+\textbf{Stability:} Linearize $\frac{\partial P(a)}{\partial x_0}$ around fixed
+point $a_I \Rightarrow$ values of linearization $\Rightarrow P'(x_0) < 1$ then
+$x(t)$ asymptotically stable and $P'(x_0) > 1$ then unstable\\
+\textbf{Example: Limit Cycle Analysis}
+\begin{itemize}
+	\item \resizebox{\linewidth}{!}{State: $z = [x, y, \dot{x}, \dot{y}]^T$,
+		analysis of stability at apex: $z = [y,\dot{x}]^T \Rightarrow z^* =
+		P(z^*)$}
+	\item \resizebox{\linewidth}{!}{Linearization: $z_{k+1} = z^* + \Delta
+			z_{k+1} = P(z^* + \Delta z_{k+1}) = P(x^*) + \left.\frac{\partial
+			P}{\partial x}\right|_{z=z^*} \cdot \Delta z_k$}
+	\begin{itemize}
+		\item \resizebox{\linewidth}{!}{Set $\Delta z_k =
+				\begin{bmatrix}
+					\Delta y_k \\
+					\Delta \dot{x}_k
+				\end{bmatrix} = 
+				\begin{bmatrix}
+					1 \\
+					0
+				\end{bmatrix} h
+				$ and simulate to the next apex
+				$
+				\begin{bmatrix}
+					\Delta y_{k+1} \\
+					\Delta \dot{x}_{k+1}
+				\end{bmatrix} = P \left( z^* +
+				\begin{bmatrix}
+					1 \\
+					0
+				\end{bmatrix} h
+				\right)
+				$} for a small value $h$
+		\item \resizebox{\linewidth}{!}{Calculate $\left.\frac{\partial P}{\partial x}\right|_{x=x^*} = 
+				\begin{bmatrix}
+					\frac{y_{k+1}-y^*}{h} & b \\
+					\frac{\dot{x}_{k+1}-\dot{x}}{h} & d
+				\end{bmatrix}$ and repeat for $\Delta z_k =
+				\begin{bmatrix}
+					\Delta y_k \\
+					\Delta \dot{x}_k
+				\end{bmatrix} = 
+				\begin{bmatrix}
+					0 \\
+					1
+				\end{bmatrix} h$}
+				The last step results in $2 \times 2$ matrices, asuming the system energy is
+				conservative ($\lambda_1 = 1$), the system is stable if $|\lambda_2| < 1$ and
+				unstable if $|\lambda_2| > 1$
+	\end{itemize}
+\end{itemize}
+
+\subsection*{Wheels}
+\begin{itemize}
+	\item most appropriate for most applications
+	\item stability guaranteed with 3 wheels (CoG within triangle)
+	\item if more than three wheels a suspension gets necessary
+	\item bigger wheels allow to overcome higher obstacles
+	\item most arrangements are non-holonomic (high control effort)
+	\item combination of actuation and steering on one wheel results in a more complex design and additional errors in odometry
+	\item selection of wheels is application dependent
+\end{itemize}
+
+\subsubsection*{Wheel Types}
+
+{\centering
+	\includegraphics[width=0.6\linewidth]{img/wheel_types}
+\par}
+
+\begin{enumerate}
+	\item[a)] Standard wheel: 2 DoF(rot. around wheel axle, contact p.), steered/fixed
+	\item[b)] Castor wheel: 3 DoF(rot. around wheel axle, contact point, castor axle) 
+	\item[c)] Swedish wheel: 3 DoF(rot. around the wheel axle, rollers, contact point) 
+	\item[d)] Ball/spherical wheel:	3 DoF suspension technically not solved
+\end{enumerate}
+
+\subsubsection*{Arrangements}
+{\centering
+\includegraphics[width=0.65\linewidth]{img/arrangements_1}
+
+\includegraphics[width=0.65\linewidth]{img/arrangements_2}
+\par}
+
+grey: actuated; if short axis or slanted: wheel is steered
+
+%\subsection*{Flying}
+%TODO
+
+
+\section*{Mobile Robot Kinematics}
+
+% TODO: seems to be not in exam (2019), see summary lecture slides
+
+\begin{minipage}{0.65\linewidth}
+Express point $P$ which is given w.r.t body frame $B$ in inertial frame $I$:
+
+$~_I \vec{r}_{OP} = ~_I\vec{r}_{OB} + \mat{R}_{IB}\cdot ~_B\vec{r}_{BP}$.
+
+
+Equivalent \textbf{homogeneous transformation}:
+
+$
+\begin{pmatrix}
+{}_I\mathbf{r}_{OP} \\
+1
+\end{pmatrix}
+=
+\begin{pmatrix}
+\mat{R}_{IB} & {}_I\vec{r}_{OB} \\
+0 & 1
+\end{pmatrix}
+\begin{pmatrix}
+{}_B\vec{r}_{BP} \\
+1
+\end{pmatrix}
+%=
+%\mat{H}_{IB}\cdot{}_B\tilde{\vec r}_{BP}.
+$
+
+$\mat{R_{BI}} = \mat{R_{IB}}^{-1} = \mat{R_{IB}}^{T}, \mat{R_{CI}} = \mat{R_{CB}} \cdot  \mat{R_{BI}}$
+
+${}_I \vec v_P = {}_I \dot{\vec r}_{OP} = \dot{\vec r}_{OB} +
+{}_I\vec{\omega}_{IB} \times {}_I\vec r_{BP}$
+
+%${}_B\vec v_P = {}_B\left[\dot{\vec r}_{OP}\right] = \dfrac{\mathrm	d\, {}_B\vec r_{OP}}{\mathrm d \,t} + {}_B\vec\omega_{IB} \times {}_B\vec r_{OP}$
+$
+\begin{aligned}
+{}_B\vec v_P &= {}_B\dot{\vec r}_{OP} = \dfrac{\mathrm	d\, {}_B\vec r_{OP}}{\mathrm d \,t} + {}_B\vec\omega_{IB} \times {}_B\vec r_{OP}
+\end{aligned}
+$
+\end{minipage}
+\begin{minipage}{0.35\linewidth}
+\includegraphics[width=\linewidth]{img/trafo}
+\end{minipage}
+
+ Basic rotation matrices $\mat R_x(\bullet)$, $\mat R_y(\bullet)$, $\mat R_z(\bullet)$:
+ 
+$
+	\begin{pmatrix}
+	1 & 0 & 0 \\
+	0 & \cos  & -\sin \\
+	0 & \sin  & \cos 
+	\end{pmatrix},\;
+	\begin{pmatrix}
+	\cos  & 0 & \sin \\
+	0 & 1 & 0 \\
+	-\sin & 0 & \cos
+	\end{pmatrix},\;
+	\begin{pmatrix}
+	\cos & -\sin & 0 \\
+	\sin & \cos & 0 \\
+	0 & 0 & 1
+	\end{pmatrix}
+$
+
+$ ~_I \vec \omega_{IC} =  ~_I \vec \omega_{IB} + ~_I \vec \omega_{BC} = ~_I \vec \omega_{IB} + \vec R_{IB} ~_B \vec \omega_{BC}$,
+$ ~_I \vec{\omega}_x = \vec{e}_x \dot\varphi $
+
+$ ~_I\hat{\vec \omega}_{IB} = \dot{\mat{R}}_{IB} \mat R_{IB}^T = 
+\begin{pmatrix}
+0 & -\omega_{IB}^z & \omega_{IB}^y\\
+\omega_{IB}^z & 0 & -\omega_{IB}^x\\
+-\omega_{IB}^y & \omega_{IB}^x & 0\\
+\end{pmatrix},
+\vec{\omega}_{IB}=
+\begin{pmatrix}
+\omega_{IB}^x\\
+\omega_{IB}^y\\
+\omega_{IB}^z
+\end{pmatrix}
+$
+
+\textbf{Jacobian} (partial derivative of position vector $\vec{r}(\vec
+q)$ w.r.t. \textbf{generalized coordinate} vector $\vec{q}$ (e.g. joint angles):
+
+	$
+	\mat J_p
+	=
+	\dfrac{\partial \vec{r_{OP}}(\vec q)}{\partial \vec q}
+	=
+	\begin{pmatrix}
+	\frac{\partial r_1}{\partial q_1} & \cdots & \frac{\partial r_1}{\partial
+		q_n} \\
+	\vdots & \ddots & \vdots \\
+	\frac{\partial r_m}{\partial q_1} & \cdots & \frac{\partial r_m}{\partial
+		q_n} \\
+	\end{pmatrix},
+	\quad  \dot{\vec{r}}_P = \frac{\partial \vec r_{OP}}{\partial \vec q} \dot{\vec{q}} = \mat J \dot{\vec{q}} $
+
+\subsection*{Inverse Kinematics}
+
+$\vec{r}_{OF}(\vec{q}) = \vec{r}_{OF}^{\text{goal}}$, given desired end effector position determine gen. coord., $\vec{r}_{OF}(\vec{q})$ often not easily invertible:
+
+Jaccobian: $\mat J = \left. \dfrac{\partial \vec{r}(\vec q)}{\partial \vec q}\right\rvert_{\vec{q}= \vec{q}^i} \Leftrightarrow \Delta\vec{r} = \mat{J}\Delta\vec{q} \Leftrightarrow \Delta\vec{q}=\mat J^+ \Delta\vec{r}$
+
+\textbf{Iterative method}(Newton method, $\mat J^+$: pseudo inverse):
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon
+	$\mathbf q^i = \mathbf q^0$\;
+	\While{$\| \mathbf r - \mathbf r^\mathrm{goal} \| > \mathrm{threshold}$}
+	{
+		$\vec q^{i+1} = \vec q^i + \mat J^+(\vec q^i) \cdot (\vec r^\text{goal}
+		- \vec r(\vec q^i))$
+	}
+\end{algorithm}
+
+%\begin{enumerate}
+%	\item Start from initial guess (e.g. given by forward kin.): $(\vec{q}^i, \vec{r}^i)$
+%	\item Evaluate the Jacobian $\mat J =	\left. \dfrac{\partial \vec{r}(\vec q)}{\partial \vec q}\right\rvert_{\vec{q}= \vec{q}^i} \Leftrightarrow \Delta\vec{r} = \mat{J}\Delta\vec{q}$
+%	\item Invert the Jacobian to obtain $\Delta\vec{q}=\mat J^+ \Delta\vec{r}$
+%	\item Update the generalized coordinates $\vec{q}^{i+1} = \vec{q}^i + \mat J^+(\vec{r}^\text{goal} - \vec r^i)$
+%\end{enumerate}
+
+\subsection*{Differential Kinematics}
+
+$\dot{\vec r}_F = \mat{J_f}\dot{\vec q}$ given end effector velocity $\dot{\vec r}_F^\text{goal}$ determine generalized velocities $\dot{\vec{q}} = \mat J^+ \dot{\vec{r}}_F^\text{goal}$
+
+\subsection*{Redundancy and Singularity}
+
+Moore-Penrose Inverse $ \mat J^+$
+
+\textbf{Redundant($m>n$):}
+
+column-rank deficient, $~_I\mat J^+ = ~_I\mat J^T(~_I\mat J ~_I\mat J^T)^{-1}$ minimizes $||\dot{\vec{q}}||_2$
+
+can have multiple solutions $\dot{\vec q} = \mat J^+ \dot{\vec r}^\text{goal} + \mat N \dot{\vec{q}}_0 \quad \mat N = \mat N - \mat J^+\mat J$
+
+$\mat N$ associated null space, i.e. movement without effecting end effector
+
+\textbf{Singular($m<n$):}
+
+row-rank deficient, $~_I\mat J^+ = (~_I\mat J^T ~_I\mat J)^{-1}~_I\mat J^T$ minimizes $||\dot{\vec{r}}^\text{goal} - \dot{\vec{r}}||_2$
+
+\subsection*{Kinematic Structure of Mobile Robots}
+
+
+\begin{minipage}{0.35\linewidth}
+\textbf{Wheeled platform}
+
+\includegraphics[width=\linewidth]{img/wheeled_robot}
+
+\end{minipage}
+\begin{minipage}{0.65\linewidth}
+$\vec{q} = \begin{pmatrix}
+x\\
+\varphi
+\end{pmatrix}
+\begin{matrix}
+\text{unactuaged base}\\
+\text{actuated joints}
+\end{matrix}
+$
+
+$ ~_I\vec{r}_{OP}=
+\begin{pmatrix}
+x + r \sin(\varphi)\\
+r + r \sin(\varphi)\\
+0
+\end{pmatrix}
+$
+
+Contact constraint:
+$ ~_I\vec{v}_P|_{\varphi = \pi} = ~_I \mat J_P |_{\varphi = \pi} \dot{\vec q} = \begin{pmatrix}
+1 & -r\\
+0 & 0\\
+0 & 0
+\end{pmatrix}
+\begin{pmatrix}
+\dot x\\
+\dot \varphi
+\end{pmatrix}
+= \vec{0}
+\Rightarrow \dot{x} - r \dot \varphi = 0
+$
+
+\end{minipage}
+
+\textbf{Legged robot} ($B$: body, $F$: foot) 
+$\vec{q} = \begin{pmatrix}
+\vec q_b\\
+\vec q_j
+\end{pmatrix}
+\begin{matrix}
+\text{unactuaged base}\\
+\text{actuated joints}
+\end{matrix}
+$
+
+contact constraint: $\dot{\vec r}_F = \mat J_F \dot{\vec{q}} = \vec{0} \Rightarrow \dot{\vec{q}} = \cancel{\mat J_F^+ \dot{\vec{r}}}_F + \mat N_F \dot{\vec{q}}_0$
+
+move body: $ \dot{\vec r}_\text{body} = \mat J_\text{body} \dot{\vec{q}} = \mat J_\text{body}\mat N_F \dot{\vec{q}}_0, \quad \dot{\vec{q}} = \mat N_F (\mat J_\text{body} \mat N_F)^+\dot{\vec{r}}_\text{body}$
+
+\subsection*{Mobile Robots}
+Differences to manipulator arms:
+\begin{itemize}
+	\item no single chain of actuated links (no unique pos. from encoders) 
+	\item motion is defined through rolling and no-sliding constraints
+	\item position must be integrated over time (inaccurate over time)
+	\item robots can move unbound with respect to their environment 
+\end{itemize}
+
+Holonomic systems
+\begin{itemize}
+	\item differential constraints are integrable, constrain robot pose
+	\item robot can move instantaneously in any direction of its DoF
+	\item example: office chair, bicycle with steering fixed
+	\item a robot is holonimic iff. DDOF = DOF
+\end{itemize}
+
+Non-holonomic systems
+\begin{itemize}
+	\item differential equations are not integrable to the final position
+	\item robot cannot move instantaneously in any direction of its DoF
+	\item the motion of all wheels must be known as function of time (measure of traveled distance of each wheel is not sufficient to calculate final position)
+	\item examples: bicycle, differential drive robot, car, two-steer
+\end{itemize}
+
+\textbf{Forward kinematics}: Transformation from joint to physical space
+
+\textbf{Inverse kinematics}: Transf. from physical to joint space
+$\rightarrow$ due to non-holonomic constraints differential kinematics used(transf. of velocities instead of positions)
+
+\subsubsection*{Kinematic Constraints}
+$I$ - Inertial, $R$ - robot, $S$ - steering, $W$ - wheel, $\vec{\xi}_I = (x, y, \theta)^T$
+
+$ \vec r_{IW} = \vec r_{IR} +\vec r_{RS} + \vec r_{SW},\quad \vec v_{RS} = \dot{\vec r}_{RS} = \vec{0}, \quad \vec v_{SW} = \dot{\vec r}_{SW} = \vec{0} $
+
+wheel eq.: $ \vec v_{IW} = \vec v_{IR} + \vec{\omega}_{IR} \times \vec r_{RS} + \vec{\omega}_{IR} \times \vec r_{SW} + + \vec{\omega}_{RS} \times \vec r_{SW}$
+
+\begin{minipage}{0.27\linewidth}
+	\includegraphics[width=\linewidth]{img/kinematics_coords}
+	\includegraphics[width=\linewidth]{img/kinematics_simple}
+\end{minipage}
+\begin{minipage}{0.73\linewidth}
+$ \vec r_{SW} = \vec 0 \Rightarrow \vec v_{IW} = \vec v_{IR} + \vec{\omega}_{IR} \times \vec r_{RS}$
+
+$ ~_W\vec v_{IW} = ~_W\vec v_{IR} + ~_W\vec{\omega}_{IR} \times ~_W\vec r_{RS}$
+
+$ ~_W\vec v_{IW} = 
+\begin{pmatrix}
+0\\ -r\dot{\varphi}\\0
+\end{pmatrix}
+\begin{matrix}
+\text{no-slliding constraint}\\
+\text{rolling constraint}\\
+\text{plannar assumption}
+\end{matrix}
+$
+
+$
+\begin{aligned}
+ &~_W\vec v_{IR} = \mat R_{WS}  \mat R_{SR} \mat R_{RI} (\dot x, \dot y, 0)^T \\
+ &= \mat R(\alpha + \beta) \mat R(\theta) (\dot x, \dot y, 0)^T, \mat R(\theta) = \mat R_z(\theta)^{-1}
+\end{aligned}
+$
+
+$ \dot{\vec{\xi}}_R = \mat R(\theta) \dot{\vec{\xi}}_I, \quad \theta$: orientation of robot
+
+$
+\begin{aligned}
+~_W\vec\omega_{IR} \times ~_W\vec{r}_{RS}
+%&=
+%\begin{pmatrix}
+%0 & - \dot \theta & 0\\
+%\dot{\theta} & 0 & 0\\
+%0 & 0 & 0
+%\end{pmatrix}
+%\begin{pmatrix}
+%l\cos\beta \\ -l \sin\beta\\ 0
+%\end{pmatrix}
+=
+\begin{pmatrix}
+l\sin\beta \\ l \cos\beta\\ 0
+\end{pmatrix}
+\dot\theta
+\end{aligned}
+$
+
+\textbf{Assumptions}: no friction for rotation, point contact, not deformable, rigid frame, no sliding
+\end{minipage}
+
+
+\textbf{Standard wheel}:
+
+Rolling constraint:
+
+$\left[\sin(\alpha + \beta) \quad -\cos(\alpha + \beta) \quad -l\cos\beta\right] \mat R(\theta) \vec\dot{\xi}_I - r\dot{\varphi} = \dot y_W - r \dot{\varphi} = 0 = \mat J_1(\beta_s)\mat R(\theta) \vec\dot{\xi}_l - r\dot{\varphi}$
+
+Sliding constraint:
+
+$ \left[ \cos(\alpha + \beta) \quad \sin(\alpha + \beta) \quad l\sin(\beta)\right] \mat R(\theta) \vec\dot{\xi}_I = 0 = \dot{x}_W = \mat C_1(\beta_s) \mat R(\theta) \vec\dot{\xi}_I$
+
+
+\textbf{Castor wheel} ($d$: offset of wheel from axis)
+
+$ \left[\sin(\alpha + \beta) \quad -\cos(\alpha + \beta) \quad -l\cos\beta\right]\mat R(\theta) \vec\dot{\xi}_I - r\dot{\varphi} = 0$
+
+$ \left[ \cos(\alpha + \beta) \quad \sin(\alpha + \beta) \quad d+l\sin(\beta)\right]\mat R(\theta) \vec\dot{\xi}_I + d\dot{\beta}= 0$
+
+\textbf{Swedish} ($\gamma$: angle between $Y$ and little wheel axis, $90^{\circ} \rightarrow$ parallel to $X$)
+
+$ \left[\sin(\alpha + \beta + \gamma) \quad -\cos(\alpha + \beta + \gamma) \quad -l\cos(\beta+\gamma)\right]\mat R(\theta) \vec\dot{\xi}_I - r\dot{\varphi}\cos\gamma = 0$
+
+$ \left[ \cos(\alpha + \beta + \gamma) \quad \sin(\alpha + \beta + \gamma) \quad l\sin(\beta + \gamma)\right]\mat R(\theta) \vec\dot{\xi}_I - r\dot{\varphi}\sin\gamma - r_{sw}\dot{\varphi}_{sw}= 0$
+
+\textbf{Only fixed ($f$) and steerable ($s$) standard wheels impose constraints}
+
+$N$ wheels of radius $r_i$ of which are $N_f$ fixed and $N_s$ steerable
+
+Rolling constraints: 
+
+$ \mat J_1(\vec\beta_s) \mat R(\theta) \dot{\vec{\xi}}_I - \mat J_2 \dot{\varphi} = \vec 0, \quad \mat J_1(\vec\beta_s) = 
+\begin{pmatrix}
+\mat J_{1f}\\
+\mat J_{1s}(\vec\beta_s)
+\end{pmatrix}$
+
+$
+\mat J_2 = \diag(r_1, \ldots, r_N), \quad \dot{\vec \varphi} = (\dot{\varphi}_1, \ldots, \dot{\varphi}_N)^T
+$
+
+No sliding constraints:
+
+$\mat C_1(\vec \beta_s) \mat R(\theta) \dot{\vec{\xi}}_I = 0, \quad
+\mat C_1(\vec \beta_s) = 
+\begin{pmatrix}
+\mat C_{1f}\\
+\mat C_{1s}(\vec\beta_s)
+\end{pmatrix}
+$
+
+$ \mat A = 
+\begin{pmatrix}
+\mat J_1(\vec{\beta}_s)\\
+\mat C_1(\vec \beta_s)
+\end{pmatrix}
+, \quad 
+\mat B = 
+\begin{pmatrix}
+\mat J_2\\
+\vec{0}
+\end{pmatrix}, \quad
+\mat A \dot{\vec \xi}_R = \mat B \dot{\vec{\varphi}}
+$
+
+Forward kinematics: $ \dot{\vec{\xi}}_R = (\mat A^T \mat A)^{-1}\mat A^T \mat B \dot{\vec{\varphi}} = \mat F \dot{\vec{\varphi}}$
+
+Backward kinematics: $ \dot{\vec{\varphi}} = (\mat B^T \mat B)^{-1}\mat B^T \mat A \dot{\vec{\xi}}_R = \mat R \dot{\vec{\xi}}_R$
+
+\begin{minipage}{0.65\linewidth}
+e.g. \textbf{Differential Drive Robot} using constraints and forward/backward kinematics:	
+	
+Forward differential kinematics:
+
+$
+%\dot{\vec\xi}_R = 
+\begin{pmatrix}
+\dot x\\ \dot y\\ \dot \theta
+\end{pmatrix}
+=
+\begin{pmatrix}
+r/2 & r/2\\
+0 & 0\\
+r/(2b) & -r/(2b)
+\end{pmatrix}
+\begin{pmatrix}
+\dot\varphi_r\\
+\dot\varphi_l
+\end{pmatrix}
+%,\quad
+%\dot{\vec{\xi}}_I=\mat R(\theta) \dot{\vec{\xi}}_r
+$
+
+Inverse differential kinematics:
+
+$
+\begin{pmatrix}
+\dot\varphi_r\\
+\dot{\varphi}_l
+\end{pmatrix}
+=
+\begin{pmatrix}
+1/r & 0 & b/r\\
+1/r & 0 & -b/r
+\end{pmatrix}
+\begin{pmatrix}
+\dot x\\
+\dot y\\
+\dot \theta
+\end{pmatrix}
+$
+\end{minipage}
+\begin{minipage}{0.35\linewidth}
+\includegraphics[width=\linewidth]{img/differential_drive}
+\end{minipage}
+
+
+\subsubsection*{Maneuverability (= Degree of Freedom DoF)}
+$\delta_M = \delta_m + \delta_s \qquad \delta_M: \text{ degree of maneuverability}$
+
+$\delta_m:$ deg. of \textbf{mobility} (mobility available from non-sliding constraints)
+
+$\delta_s:$ deg. of \textbf{steerability} (added DoF contributed by steering)
+
+synchronization of wheels for $>3$ wheels necessary (in some arrangements also for 3 wheels necessary)
+
+\textbf{degree of mobility:} $\delta_m = \dim N(\mat C_1(\vec \beta_s)) = 3 - \text{rank}(\mat C_1(\vec \beta_s))$
+
+\textbf{degree of steerability:} $\delta_s = \text{rank}(\mat C_{1s}(\vec \beta_s)) \qquad 0 \leq \delta_s \leq 2$
+
+if $\delta_M = 3$: instantaneous center of rotation (ICR) can be anywhere
+
+if $\delta_M = 2$: the ICR is constrained to lie on a line
+
+{\centering
+\includegraphics[width=0.9\columnwidth]{img/steerability}
+\par}
+
+%\begin{minipage}{0.24\linewidth}
+%\begin{center}
+%\includegraphics[width=\linewidth{img/ackermann}
+%
+%Ackermann steer.
+%
+%$\delta_M = 2$
+%
+%$\delta_m =1$
+%
+%$\delta _s = 1$
+%\end{center}
+%\end{minipage}
+
+\begin{tabularx}{\linewidth}{ c | c | c | c }
+	\includegraphics[width=0.24\columnwidth]{img/ackermann}     &
+	\includegraphics[width=0.24\columnwidth]{img/bicycle}     &
+	\includegraphics[width=0.22\columnwidth]{img/synchro_drive} &
+	\includegraphics[width=0.16\columnwidth]{img/omni_drive}\\
+	Ackermann steer. & Bicycle & Synchro Drive   & Omni Drive\\
+	$\delta_M=2 $ & $\delta_M=2 $ & $\delta_M=2 $ & $\delta_M=3 $\\
+	$\delta_m=1 $ & $\delta_m=1 $ & $\delta_m=1 $ & $\delta_m=3 $\\
+	$\delta_s=1 $ & $\delta_s=1 $ & $\delta_s=1 $ & $\delta_s=0 $
+\end{tabularx}
+
+\subsubsection*{Mobile Robot Workspace}
+Differential degrees of freedom (DDOF) is the number of dimensions in velocity space.
+Workspace DOF is the dimension of achievable poses.\\
+DDOF $= \delta_m$ \quad
+DDOF $\leq \delta_M \leq$ DOF
+
+\subsubsection*{Motion Control}
+
+Objective: \textbf{follow a trajectory} (position \& velocity as a function of time)
+\begin{itemize}
+	\item not straight forward because typically non-holonomic and MIMO
+	\item most controllers are neglecting the dynamics of the system
+\end{itemize}
+
+\textbf{open loop}: motion segments of straight lines and circles pre-compute smooth trajectory, non-smooth acceleration profiles, does not adapt to environment
+
+\textbf{feedback control} (differential drive)
+
+$
+\begin{pmatrix}
+v(t)\\
+\omega(t)
+\end{pmatrix}
+=\mat K \vec e
+= \mat K 
+\begin{pmatrix}
+x^\text{goal} - x\\
+y^\text{goal} - y\\
+\theta^\text{goal} - \theta\\
+\end{pmatrix}
+\qquad \lim_{t\rightarrow\infty} \vec e(t) = 0
+$
+
+\textbf{kinematic position control}
+
+%\begin{overpic}[width=\columnwidth,grid,tics=10]{img/motion_control}
+%	\put (20,85) {\huge$\displaystyle\gamma$}
+%\end{overpic}
+\begin{minipage}{0.5\columnwidth}
+	$\dot{\vec{\xi}}_I = 
+	\begin{pmatrix}
+	\dot x\\
+	\dot y\\
+	\dot \theta
+	\end{pmatrix}
+	=
+	\left(
+	\begin{smallmatrix}
+	\cos\theta & 0\\
+	\sin\theta & 0\\
+	0 & 1
+	\end{smallmatrix}
+	\right)
+	\begin{pmatrix}
+	v\\
+	\omega
+	\end{pmatrix}
+	$
+	
+\includegraphics[width=\linewidth]{img/motion_control}
+\end{minipage}
+\begin{minipage}{0.5\columnwidth}
+$\rho = \sqrt{\Delta x^2 + \Delta y^2}$
+
+$\alpha= \text{atan2}(\Delta y, \Delta x) - \theta$
+
+$\beta = -\alpha - \theta$
+
+$
+\begin{pmatrix}
+\dot{\rho}\\
+\dot{\alpha}\\
+\dot \beta
+\end{pmatrix}
+= 
+\pm
+\left(
+\begin{smallmatrix}
+-\cos\alpha & 0\\
+\frac{\sin \alpha}{\rho} & -1\\
+\frac{-\sin \alpha}{\rho} & 0
+\end{smallmatrix}
+\right)
+\begin{pmatrix}
+v\\
+\omega
+\end{pmatrix}
+$
+
+$+$ for $\alpha \in (- \frac{\pi}{2},\frac{\pi}{2}]$
+
+$-$ otherwise
+
+$
+\begin{pmatrix}
+	\dot{\rho}\\
+	\dot{\alpha}\\
+	\dot \beta
+\end{pmatrix}
+=
+\left(
+\begin{smallmatrix}
+-k_\rho \rho \cos\alpha\\
+k_\rho \sin \alpha - k_\alpha \alpha - k_\beta \beta\\
+-k_\rho \sin \alpha
+\end{smallmatrix}
+\right)
+$
+
+with $v=k_\rho \rho, \quad \omega = k_\alpha \alpha + k_\beta \beta$
+
+will drive the robot to $(\rho, \alpha, \beta) = \vec 0$
+
+stable if $k_\rho > 0 > k_\beta, k_\alpha - k_\rho > 0$
+\end{minipage}
+$v$ has constant sign (direction of movement positive or negative)
+
+\section*{Perception}
+
+Challenges: perceiving the environment, dealing with uncertain and only partially available information of the environment, acting appropriately (probabilistic reasoning)
+
+Abstraction chain (data compression): 
+Raw Data $\rightarrow$ Features (Navigation) $\rightarrow$ Objects (Interaction) $\rightarrow$ Places / Situations (Servicing/Reasoning)
+
+\subsection*{Types of Sensors}
+\textbf{Proprioceptive} (PC): measures internal values of the system; e.g. motor speed, wheel load, heading 
+
+\textbf{Exteroceptive} (EC): information from the environment; e.g. light intensity, distance to object
+
+can be \textbf{passive} (P): measure energy from the environment, strongly influenced by the environment; e.g. camera, switch, poti, compass, gyro
+
+or \textbf{active} (A): emit energy and measure the reaction, performs better, influence on environment; e.g. opt. encoder, GPS, LiDAR, ultrasonic
+
+multimodal setup: benefit from complementary sensor capabilities
+
+\subsubsection*{Encoders}
+Converts linear or angular position to analog or digital signal used for steering, odometry (also brush (PC,P), magnetic, inductive, capacitive)
+\textbf{optical encoder} (PC,A): interpolation for higher accuracy
+\begin{itemize}
+	\item regular: \# of transitions, direction not determined
+	\item quadrature: two shifted sensors, 4 times higher resolution and provides direction
+\end{itemize}
+
+\subsubsection*{Heading Sensors}
+Determine orientation and inclination with respect to reference
+
+\textbf{Compass} (EC,P): magnetic (earth field) (except gyrocompass), easily disturbed, bandwidth limitation
+
+\textbf{Gyroscope} (PC,P): absolute measure for heading (preserve initial orientation); \textit{mechanical}: fast spinning wheel, friction!, \textit{rate}: springs at gimbals, angular speeds, \textit{optical}: laser beam in fiber on a coil, in direction of rotation faster (Sagnac), measure phase shift
+
+\textbf{Accelerometer} (PC,P): measure external forces acting on them; \textit{mechanical}: spring, mass, damper sys., \textit{MEMS} (gas as damper), capacitive up to 50 g, \textit{piezoelectronic} (voltage $\propto$ stress)
+
+\subsubsection*{Position Sensor}
+\textbf{IMU} (gyro \& accelero.): estimates	relative position and orientation, (inertial measurement unit), drifts after long operation period (2x $\int$, quadratic error)
+
+\includegraphics[width=\linewidth]{img/imu_diagram}
+
+\textbf{Motion-capture system} (EC,A): several cameras track reflective markers, <1mm, suitable for ground truth, requires pre-calibration
+
+\textbf{Ground-based beacons} (EC,A): active or passive, guiding devices with precisely known position, costly, problematic indoors (only for GPS)
+
+\textbf{GPS} (global positioning sys.) (EC,A): location determined by time of flight, 4 satellites required to determine $(x,y,z)$ and clock correction $\Delta t$, accuracy $\sim$3m, problems in street canyons, woods, indoors
+
+\textbf{Differential GPS}: base station with precisely known location used to correct position, $\sim$cm
+
+\subsubsection*{Range Sensors (EC, A)}
+
+Time of flight measurement, distance $d= \frac{ct}{2}$ (round-trip), influenced by surface reflection and robot motion
+
+\textbf{Laser} (LiDAR):	$c = 0.3$m/ns (electromagnetic waves), expensive, depends on accurate time measurement, e.g. Velodyne
+\textit{pulsed laser}: (standard today) directly measure elapsed time (picoseconds); \textit{phase shift measurement}:
+$D' = 2D = \frac{\theta}{2 \pi}\lambda\quad \lambda=\frac{c}{f}$ ($D'$ covered distance, $c$ speed of light, $f$ modulating frequency)
+
+\begin{minipage}{0.58\linewidth}
+\includegraphics[width=\linewidth]{img/triangulation}
+\end{minipage}
+\begin{minipage}{0.42\linewidth}
+\textbf{Laser triangulation} (structured light, see img): detect projected pattern with camera, e.g. Kinect I (infrared (IR) pattern)
+
+\textbf{Sonar} (ultrasonic): $c = 0.3$m/ms (sound waves), opening angle plays major role, range of meters
+
+\textbf{Time of flight camera}: pulsing Infrared LED light, distance for every pixel, e.g. Kinect II, Intel RealSense
+\end{minipage}
+
+\subsection*{Uncertainty Representation}
+\textbf{Systematic errors}: can be modelled and calibrated, e.g. wheel diameter, camera calibration
+
+\textbf{Random errors}: cannot be predicted, described probabilistically, e.g. hue instability
+
+\textbf{Error propagation law}: for $n$ inputs and $m$ outputs
+
+$Y_j = f_j(X_1, \ldots, X_n)$
+
+Output covariance $C_Y$ is given by $C_Y=F_X C_X F_X^T$ where $C_X$ is the input covariance and $F_X$ is the Jacobian of $f$.
+
+\textbf{Probablities}: $ \int f(x) \text{dx} = 1, \mu = \int x f(x) \text{dx}, \sigma^2 = \int (x-\mu)^2 f(x) \text{dx}$
+
+If $z = M_x x + M_y y$ with $ x\sim \mathcal{N}(\mu_x, \Sigma_x), y\sim \mathcal{N}(\mu_y, \Sigma_y) $
+
+$\Rightarrow z\sim \mathcal{N}(M_x \mu_x + M_y \mu_u, M_x \Sigma_x M_x^T + M_y \Sigma_y M_y^T)$
+
+$
+\mathcal{N}(\mu_{1},\,\sigma^{2}_{1})\cdot\mathcal{N}(\mu_{2},\,\sigma^{2}_{2})= \mathcal{N}\left(\dfrac{\sigma^{2}_{1}\mu_{2}+\sigma^{2}_{2}\mu_{1}}{\sigma^{2}_{1}+\sigma^{2}_{2}}\,\dfrac{\sigma^{2}_{1}\sigma^{2}_{2}}{\sigma^{2}_{1}+\sigma^{2}_{2}}\right)
+$
+
+
+e.g. \textbf{Line fitting/extraction}
+
+Point $(\rho_i, \theta_i)$/$(x_i, y_i)$-Line$(r, \alpha)$ distance:
+
+$d_i = \rho_i \cos(\theta_i - \alpha) -r = x_i\cos(\alpha) + y_i\sin(\alpha) - r$
+
+Unique sensor uncertainty $\sigma_i \rightarrow$ weighted least squares
+
+$S = \sum_i w_i d_i^2 = \sum w_i(\rho_i \cos(\theta_i - \alpha) -r )^2, \quad w_i = 1/\sigma_i^2$
+
+$\frac{\partial S}{\partial \alpha} = 0,\quad \frac{\partial S}{\partial r} = 0$
+
+$\mat C_x = 
+\begin{bmatrix}
+\diag(\sigma_\rho^2) & 0\\
+0 & \diag(\sigma_\theta^2)
+\end{bmatrix},
+\quad
+\mat F_{\rho\theta} =
+\left(
+\begin{smallmatrix}
+\cdots & \frac{\partial \alpha}{\partial \rho_i} & \cdots & \frac{\partial \alpha}{\partial \theta_i} & \cdots\\
+\cdots & \frac{\partial r}{\partial \rho_i} & \cdots & \frac{\partial r}{\partial \theta_i} & \cdots
+\end{smallmatrix}
+\right)
+$
+
+$\mat C_{\alpha r} = \mat F_{\rho \theta} \mat C_x \mat F_{\rho \theta}^T$ (uncertainty of line)
+
+\subsection*{Computer Vision}
+
+Definition: automatic extraction of meaningful information from images and videos, semantic and geometric information;
+human vision influenced by relative impressions, >500 Mpix, ~3 GB/s;
+\textbf{difficulties}: viewpoint variations, illumination challenges, motion, intra-class variations, scale and shape ambiguities;
+\textbf{advantages}:	low cost, compact, compatibility
+
+
+\subsubsection*{Camera Model}
+
+\textbf{Pinhole camera}: Aperture, all rays go through the Optical Center C, Image Plane, only one ray per object, object inverted on image plane
+
+\textbf{Converging lens}: focuses multiple rays of the same object, rays parallel to optical axis meet in the focal point
+
+
+\begin{minipage}{0.6\linewidth}
+	\includegraphics[width=\linewidth]{img/thinlens}
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+	Thinlens eq.: $ \frac{1}{f} = \frac{1}{z} + \frac{1}{e}$ for $z \rightarrow \infty \Rightarrow f \approx e$ (pinhole approximation) $\rightarrow$ Treat lens as pinhole:
+	
+	Perspective: $B' = A  f/z$
+
+\end{minipage}
+specific distance is in focus, other points blurred, reduced by small aperture size, best reduce below image resolution
+
+\textbf{Omnidirectional Camera}: Applications: Car driving assistance systems, sky observation, endoscopic imaging, Street View
+{\centering
+\includegraphics[width=0.8\linewidth]{img/omnidirectional}
+\par}
+\textbf{Catadioptric cameras}: 
+hyperbola, parabola or elliptic + orthographic lens
+
+If camera is central (single effective viewpoint) 
+\begin{itemize}
+\item unwarping into perspective image possible
+\item transform image points to spherical vectors
+\item standard algorithms for perspective geom. applicable
+\end{itemize}
+
+Intrinsic parameters include mirror model
+
+Distortion model (n=4 enough for most fisheye \& catadioptric): $f(u,v)=a_0+a_1 \rho+\ldots+a_n \rho^n$
+\subsubsection*{Misc}
+\textbf{Event based cameras}: dynamic vision sensor, captures intensity changes asynchronously, no motion blur
+
+\textbf{Optical flow}: pattern of apparent motion of objects, surfaces, and edges in a visual scene caused by the relative motion between an observer and a scene.
+
+\subsubsection*{Perspective Projection}
+Image plane represented in front of camera, \textbf{Optical Axis Z}, \textbf{principal point O}, camera measures angles (bearing sensor)
+
+Effects: objects far away appear smaller, parallel lines intersect in vanishing point, all vanishing points are on the vanishing line
+
+
+$x = f \frac{X_c}{Z_c}, y = f \frac{Y_c}{Z_c}$ ($\vec p = (x,y)$)
+
+Convert $\vec{p}$ from local image plane coord. to pixel coord. $(u,v)$, camera optical center $\vec{O} = (u_0,v_0)$, scale factor $(k_u, k_v)$ for pixel size
+
+\begin{minipage}{0.45\linewidth}
+	\includegraphics[width=\linewidth]{img/perspective_geometry}
+\end{minipage}
+\begin{minipage}{0.55\linewidth}
+
+	
+	$u = u_0 + k_u x = u_0 + k_u \frac{fX_c}{Z_c}$
+	
+	$v = v_0 + k_v y = v_0 + k_v \frac{fY_c}{Z_c}$
+	
+	normally $k_u = k_v$ \& no skew ($\alpha_{12} = 0$)
+\end{minipage}
+
+\begin{minipage}{0.35\linewidth}
+	\includegraphics[width=\linewidth]{img/pixel_coord}
+\end{minipage}
+\begin{minipage}{0.65\linewidth}	
+	$
+	\begin{aligned}
+	&\tilde{p}
+	=
+	\begin{pmatrix}
+	\tilde{u}\\
+	\tilde{v}\\
+	\tilde{w}\\
+	\end{pmatrix}
+	=
+	\lambda
+	\begin{pmatrix}
+	u\\
+	v\\
+	1\\
+	\end{pmatrix}
+	\\
+	&= 
+	\underbrace{
+	\begin{pmatrix}
+	\alpha_u & \alpha_{12} & u_0\\
+	0 & \alpha_v & v_0\\
+	0 & 0 & 1
+	\end{pmatrix}
+	}_{\mat K}
+	\begin{pmatrix}
+	X_c\\
+	Y_c\\
+	Z_c
+	\end{pmatrix}
+%	=
+%	\mat K
+%	\begin{pmatrix}
+%	X_c\\
+%	Y_c\\
+%	Z_c
+%	\end{pmatrix}
+	\quad
+	\underbrace{
+	\begin{matrix}
+	\alpha_u = k_u f\\
+	\alpha_v = k_v f\\
+	\end{matrix}
+	}_{\mathclap{\substack{\text{Focal lengths in}\\ \text{$u$ and $v$ directions}}}}
+	\end{aligned}
+	$
+\end{minipage}
+
+Calibration matrix $\mat K$ (Intrinsic parameters)
+
+$
+\begin{pmatrix}
+X_c\\
+Y_c\\
+Z_c
+\end{pmatrix}
+= 
+\left(\begin{array}{ccc|c}  
+r_{11} & r_{12} & r_{13} & t_1\\
+r_{21} & r_{22} & r_{23} & t_2\\
+r_{31} & r_{32} & r_{33} & t_3
+\end{array}\right)
+\begin{pmatrix}
+X_W\\
+Y_W\\
+Z_W\\
+1
+\end{pmatrix}
+$
+
+\begin{minipage}{0.6\linewidth}
+	$\Rightarrow \lambda \begin{pmatrix}
+	u\\
+	v\\
+	1
+	\end{pmatrix}
+	= 
+	\underbrace{\mat K \left[\mat R | \vec T\right]}_{\mat M}
+	\begin{pmatrix}
+	X_W\\
+	Y_W\\
+	Z_W\\
+	1
+	\end{pmatrix}
+	$
+	
+	$\mat M $: Perspective projection matrix
+	
+	Barrel and pincusion modelled as:
+	
+	$
+	\begin{pmatrix}
+		u_d\\
+		v_d
+	\end{pmatrix}
+	= (1+k_1 r^2)
+	\begin{pmatrix}
+	u - u_0\\
+	v - v_0
+	\end{pmatrix}
+	+
+	\begin{pmatrix}
+	u_0\\
+	v_0
+	\end{pmatrix}
+	$
+	where $r^2 = (u-u_0)^2 + (v-v_0)^2$
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+	\includegraphics[width=\linewidth]{img/extrinsics}
+\end{minipage}
+
+\subsubsection*{Camera Calibration}
+
+Determine intrinsic and extrinsic camera parameters $\rightarrow \mat K, \mat R, \vec T$ by using known correspondences of $\vec p \Leftrightarrow \vec P$
+
+\textbf{Direct Linear Transform} (DLT): 
+
+$\lambda\begin{pmatrix}
+u\\
+v\\
+1
+\end{pmatrix}
+=
+\begin{pmatrix}
+m_{11} & m_{12} & m_{13} & m_{14}\\
+m_{21} & m_{22} & m_{23} & m_{24}\\
+m_{31} & m_{32} & m_{33} & m_{34}
+\end{pmatrix}
+\begin{pmatrix}
+X_W\\
+Y_W\\
+Z_W\\
+1
+\end{pmatrix}
+=
+\begin{pmatrix}
+\vec{m}_1^T\\
+\vec{m}_2^T\\
+\vec{m}_3^T
+\end{pmatrix}
+\vec{P}
+$
+
+$
+\Rightarrow
+\begin{matrix}
+u_i = \frac{\vec{m}_1^T\vec{P}_i}{\vec{m}_3^T\vec{P}_i}\\
+v_i = \frac{\vec{m}_2^T\vec{P}_i}{\vec{m}_3^T\vec{P}_i}\\
+\end{matrix}
+\Rightarrow
+\begin{pmatrix}
+\vec P_1^T &  \vec 0 & -u_1 \vec{P}_1^T\\
+\vec 0 &  \vec P_1^T & -v_1 \vec{P}_1^T\\
+\vdots & \vdots & \vdots\\
+\vec P_n^T &  \vec 0 & -u_n \vec{P}_n^T\\
+\vec 0 &  \vec P_n^T & -v_n \vec{P}_n^T\\
+\end{pmatrix}
+\begin{pmatrix}
+\vec{m}_1\\
+\vec{m}_2\\
+\vec{m}_3
+\end{pmatrix}
+=\vec{0}=\mat Q \mat M
+$
+
+11 DoF ($\mat Q$ valid up to scale), at \textbf{least 6 points required} (non coplanar)
+over-determined solution ($n\leq6$): Singular Value Decomposition (SVD) (EV to smallest EW of $Q^T Q$) (also called linear least squares)
+
+$\mat K, \mat R, \vec T$ can be calculated by QR factorization of 3x3 submatrix, $\mat K $ upper-triangular, $R$ orthonormal, $\vec T = \mat K^{-1}[m_{14}, m_{24}, m_{34}]^T$
+
+
+\subsubsection*{Stereo Vision}
+\textbf{Known relative position} $\vec T, \mat R$, recover 3D scene information
+
+Basic principle: triangulation of one point from two images, requires camera pose (calibration) and point correspondence
+
+\begin{minipage}{0.6\linewidth}
+	
+	simplified case: identical and aligned cameras (to x-axis)
+	
+	$ \frac{f}{Z_P} = \frac{u_l}{X_P} \quad \frac{f}{Z_P} = \frac{-u_r}{b-X_P} \quad Z_p = \frac{bf}{u_l - u_r}$
+	
+	\textbf{Baseline}: distance $b$ between the optical centers of the two cameras
+	
+	\textbf{Disparity}: horizontal displacement $u_l - u_r$ from one image to the other, smaller if point is further away
+	
+	\textbf{Disparity map}: compute disparity for corresponding points of every pixel, can be used for 3D reconstruction
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+	\includegraphics[width=\linewidth]{img/stereo_vision}
+\end{minipage}
+
+\textbf{General case}: non-identical cameras and not aligned, two identical cameras do not exist \& aligning cameras on axis is very hard, set world coord. frame as origin of one camera
+
+$
+\tilde{\vec p}_l = \lambda
+\left(
+\begin{smallmatrix}
+u_l\\
+v_l\\
+1
+\end{smallmatrix}
+\right)
+= \mat K_l 
+\left(
+\begin{smallmatrix}
+X_W\\
+Y_W\\
+Z_W
+\end{smallmatrix}
+\right)
+,
+\tilde{\vec p}_r = \lambda
+\left(
+\begin{smallmatrix}
+u_r\\
+v_r\\
+1
+\end{smallmatrix}
+\right)
+= \mat K_r 
+\left[\mat R | \vec T\right]
+\left(
+\begin{smallmatrix}
+X_W\\
+Y_W\\
+Z_W\\
+1
+\end{smallmatrix}
+\right)
+$
+
+\subsubsection*{Correspondence Search}
+Use similarity measure (SAD,…) in window around point of interest
+
+\textbf{Epipolar plane}: defined by optical centers and one point
+
+\textbf{Epipolar line}: projection of the ray from one camera through point in the other camera
+
+\textbf{Epipole}: projection of other camera in image plane, all epipolar lines go through it
+
+\textbf{Epipolar constrain}t: reduces correspondence problem to 1D search along epipolar lines
+
+\begin{minipage}{0.6\linewidth}
+\includegraphics[width=\linewidth]{img/epipolar_geometry}
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+\textbf{Epipolar rectification}:
+warps left and right images into new rectified images, reprojection on a common plane parallel to baseline \& collinear, as a result the epipolar lines are aligned to the baseline (remove rotation, adjust for focal lengths, remove lens distortions, adjust translation)
+\end{minipage}
+
+
+\subsubsection*{Triangulation}
+
+Finding 3D coordinates of a point given the projections on multiple image planes, $\mat K,\mat R,\vec T$ known, because of noise and numerical errors the projections will not intersect (pick shortest segment connecting the two rays and let the midpoint be the point)
+
+$\tilde{\vec p}_1 = \mat K_1 [\mat I | \vec 0] \tilde{\vec P} = \mat M_1 \tilde{\vec P}, \quad \tilde{\vec p}_2 = \mat K_1 [\mat R | \vec T] \tilde{\vec P} = \mat M_2 \tilde{\vec P}$
+
+cross-multiply by $\tilde{\vec p}_i \Rightarrow \tilde{\vec{p}}_i \times \mat M_i \mat P = \vec 0$
+
+\textbf{Linear approach}: $\Rightarrow$ solve $\mat A \cdot \vec P= 0$, by the singular vector of smallest singular value of singular value decomposition (SVD) of 
+
+$\left[\left[\vec p_1\right]_\times \mat M_1; \quad \left[\vec p_2\right]_\times \mat M_2\right], \qquad \vec a \times \vec b = \left[\vec a\right]_\times \vec b = \left(\begin{smallmatrix}
+0 & -a_z & a_y\\
+a_z & 0 & -a_x\\
+-a_y & a_x & 0
+\end{smallmatrix}\right)$
+
+\textbf{Reprojection error}: Sum of Squared Reprojection Errors (SSRE)
+
+SSRE=$||\vec p_1 - \mat M_1\vec P||^2 + ||\vec p_2 - \mat M_2\vec P||^2$
+
+residual: average reprojection error, in practice initialization with linear approach then minimizing SSRE
+
+\begin{minipage}{0.16\linewidth}
+	\includegraphics[width=\linewidth]{img/small_baseline}
+\end{minipage}
+\begin{minipage}{0.34\linewidth}
+	\includegraphics[width=\linewidth]{img/large_baseline}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\textbf{Choosing baseline}
+
+too small: large depth error, $\Delta Z = \frac{Z^2}{bf} \Delta D$
+
+too large: minimum measurable distance increases, difficult search problem for close objects, point might not be visible from both cameras
+\end{minipage}
+
+\subsubsection*{Structure from Motion}
+
+Given image point correspondences. \textbf{Recover 3D scene \& camera position}
+In monocular vision it is impossible to recover the absolute scale of the scene! $\rightarrow$ 5 DoF (for known $\mat K$, 3 rotation, 2 translation)
+
+We study the case of known camera matrix $\mat K$ ($\rightarrow$ essential matrix), $4n$ knowns (2 coord. in each image), $5+3n$ (3D coord.) unknowns $\rightarrow$ a solution exists for $n\geq 5$ ($\geq 5$ point correspondences)
+
+\includegraphics[width=\linewidth]{img/epipolar_geometry_2}
+
+\textbf{Epipolar geometry}: $\vec p_1 = [\overline{u}_1, \overline{v}_1, 1]^T, \vec p_2 = [\overline{u}_2, \overline{v}_2, 1]^T, \mat T$ coplanar
+
+$\vec p_2^T \cdot \vec n = 0 \Rightarrow \vec p_2^T \cdot(\mat T \times \vec p_1')= 0 \Rightarrow \vec p_2^T \cdot (\mat T \times (\mat R \vec p_1)) = 0 $
+
+$\Rightarrow \vec p_2^T[\vec T]_\times \mat R \vec p_1 = 0$ 
+
+$\Rightarrow $ \textbf{epipolar constraint}: $\vec p_2^T \mat E \vec p_1 = 0 $ , \textbf{essential matrix}: $\mat E = [T]_\times \mat R$
+
+\begin{itemize}
+\item can be computed from 5 image correspondences (5-point alg. 2004)
+\item can be decomposed in R and T, leads to four distinct solutions (take the one where points are in front of both cameras)
+\end{itemize}
+
+\textbf{8-point algorithm} (8 point correspondences needed): 
+
+$
+[\overline{u}_2^i \quad \overline{v}_2^i \quad 1]
+\left(
+\begin{smallmatrix}
+e_{11} & e_{12} & e_{13}\\
+e_{21} & e_{22} & e_{23}\\
+e_{31} & e_{32} & e_{33}\\
+\end{smallmatrix}
+\right)
+\begin{pmatrix}
+\overline{u}_1^i \\
+\overline{v}_1^i \\
+1
+\end{pmatrix}
+= 0 \Rightarrow$
+
+$
+\underbrace{
+\begin{pmatrix}
+\overline{u}_2^i\overline{u}_1^i & \overline{u}_2^i\overline{v}_1^i & \overline{u}_2^i & \overline{v}_2^i\overline{u}_1^i  & \overline{v}_2^i\overline{v}_1^i & \overline{v}_2^i & \overline{u}_1^i & \overline{v}_1^i & 1\\
+&&& \tiny{\vdots} &&&&&
+\end{pmatrix}
+}_{\mat Q \text{ (known)}}
+\begin{pmatrix}
+e_{11}\\
+e_{12}\\
+\tiny{\vdots}\\
+e_{33}
+\end{pmatrix}
+= 0
+$
+
+$\Rightarrow \min\limits_{||E||^2=1} \sum\limits_{i=1}^N (\vec p_2^{i^{T}}\mat E \vec p_1^i)^2$
+
+A linear least-square solution is given through Singular Value Decomposition by the eigenvector of $\mat Q$ corresponding to its smallest eigenvalue (which is the unit vector that minimizes $||\mat Q \cdot \mat E||^2$).
+
+\subsubsection*{Image Filtering}
+
+\textbf{Linear filters} replace every pixel by a linear combination of its neighbors. \textbf{Shift-invariant filters} perform the same op. on every point of the image.
+
+\textbf{Low-pass filtering}: smooths image (keeps low frequency comp.)
+
+\textbf{High-pass filtering}: enhances  the contours of an image 
+
+\textbf{Correlation} with a filter/kernel/mask $F$ of size $(2N+1)$:
+
+{\centering
+	$J(x) = F \circ I(x) = \sum_{i=-N}^N F(i) I(x + i)$
+\par}
+
+{\centering
+	$J(x,y) = F \circ I(x,y) = \sum_{i=-N}^N\sum_{j=-M}^M F(i,j) I(x + i, y+ j)$
+\par}
+
+
+\textbf{Convolution} is correlation with a flipped filter/image:
+
+{\centering
+	$J(x) = F \ast I(x) = \sum_{i=-N}^N F(i) I(x - i)$.
+\par}
+
+Convolution is \textbf{associative}: $F\ast (G \ast I) = (F \ast G ) \ast I$
+
+%\textbf{Derivative theorem}: $ \frac{\partial}{\partial x} (H \ast I) = \frac{\partial H}{\partial x} \ast I$
+
+Assume $H$ is quadratic filter with $2N+1$ dimensions
+
+2D:	$(2N+1)^2$ multiplications, $(2N+1)^2-1$ additions
+
+2x1D: 	$2(2N+1)$ mult., $4N$ add. (separable, if const. factor only 1 mult.)
+
+Edge padding: zero padding (black), wrap around (from other end), copy edge (edge value), reflect across edge (mirror)
+
+\textbf{Smoothing masks}: sum up to 1 to not change image intensity
+
+Average: $H = \frac{1}{(2N + 1)^2}$, 
+Gaussian: 1D: $G_\sigma(x) = \frac{1}{\sqrt{2\pi\sigma^2}}\exp(-\frac{x^2}{2\sigma^2})$
+
+2D: $G_\sigma(x,y) = G_\sigma(x)G_\sigma(y)$ (separable)
+
+\textbf{Template Matching}
+
+Use template as filter and apply similarity measure and minimize
+
+$\mathrm{SSD}(x) = \sum_{i=-N}^N \left[ F(i) - I(x+i) \right]^2$, affected by intensity magnit.
+
+Zero-mean normalized cross correlation (ZNCC): Invariant to local average intensity. Maximize:
+
+{\centering
+	$
+	\mathrm{ZNCC}(x) = \dfrac{\sum_i
+		\left[F(i)- \mu_F\right] \left[I(x + i) - \mu_{I_x} \right]}
+	{
+		\sqrt{\sum_i \left[F(i) - \mu_F\right]^2}
+		\sqrt{\sum_i \left[I(x+i) - \mu_{I_x}\right]^2}
+	},
+	$\\[3pt]
+	$
+	\mu_F = \frac{\sum_i F(i)}{2N + 1},\;\;
+	\mu_{I_x} = \frac{\sum_i I(x+i)}{2N + 1},\;\;
+	i=-N\ldots N
+	$
+\par}
+
+Normalized Cross Correlation (NCC): ZNCC with $\mu_{I_x} = \mu_F = 0$
+
+\textbf{Edge Detection:} (smooth before edge detection)
+
+Partial derivatives $\frac{\partial f}{\partial x}$ and $\frac{\partial f}{\partial y}$ $\rightarrow$ Haar Wavelet: $F_x = [-1\quad 1], F_y= [-1\quad 1]^T$
+
+Prewitt:
+$
+\left(
+\begin{smallmatrix}
+-1 & 0 & 1\\
+-1 & 0 & 1\\
+-1 & 0 & 1\\
+\end{smallmatrix}
+\right)
+,
+\left(
+\begin{smallmatrix}
+-1 & -1 & -1\\
+0 & 0 & 0\\
+1 & 1 & 1\\
+\end{smallmatrix}
+\right)
+$
+Sobel: 
+$
+\left(
+\begin{smallmatrix}
+	-1 & 0 & 1\\
+	-2 & 0 & 2\\
+	-1 & 0 & 1\\
+\end{smallmatrix}
+\right)
+,
+\left(
+\begin{smallmatrix}
+-1 & -2 & -1\\
+0 & 0 & 0\\
+1 & 2 & 1\\
+\end{smallmatrix}
+\right)
+$
+
+Gradient: $\nabla f = [\frac{\partial f}{\partial x}\quad \frac{\partial f}{\partial y}]^T, \theta = \arctan(\frac{\partial f}{\partial y}/\frac{\partial f}{\partial x})$
+
+\textbf{Derivative of Gaussian}:
+
+$\frac{\partial}{\partial x} ( H \ast I) = \left(\frac{\partial}{\partial x} H\right) \ast I$, edge at extrema of convolved image.
+
+\textbf{Laplacian of Gaussian}: 
+$\frac{\partial^2}{\partial x^2} ( H \ast I) = \left(\frac{\partial^2}{\partial x^2} H\right) \ast I$, edge at zero crossing
+
+$\mathrm{LoG} = \Delta G_\sigma(x, y) = \nabla^2 G_\sigma(x, y) = \frac{\partial^2 G_\sigma(x,y)}{\partial x^2} + \frac{\partial^2 G_\sigma(x, y)}{\partial y^2}$
+
+\textbf{Derivative masks}: sum to 0, high value at points of high contrast
+
+%\par\noindent\rule{\linewidth}{0.4pt}
+\hrule
+\vspace{4pt}
+
+\textbf{Canny edge-detection}:	Use grayscale image
+\begin{enumerate}
+	\item Compute gradient of Gauss. smoothed image in both directions
+	\item Discard pixels with gradient magnitude below a threshold
+	\item Non-maximum suppression (thinning): keep local maxima along gradient
+\end{enumerate}
+
+\subsubsection*{Point Features}
+
+\textbf{Repeatable} (needs to find same features in different images), \textbf{reliable and distinctive} (able to differ between different features), invariance, localization, computational efficiency, robustness
+
+\textbf{Corners}: in the region around a corner, the image gradient has two or more dominant directions, high localization accuracy
+
+\textbf{Harris Corner Detector} (Shi-Tomasi)
+
+$\mathrm{SSD}(\Delta x, \Delta y) = \sum_{x,y \in P}^N \left( I(x,y) - I(x+\Delta, y + \Delta y) \right)^2$
+
+with $I_x =\frac{\partial I(x,y)}{\partial x}$ and Taylor:
+
+$\mathrm{SSD}(\Delta x, \Delta y) \approx \sum_{x,y \in P}^N \left( I_x(x,y) \Delta x + I_y(x,y) \Delta y) \right)^2
+= \left(\begin{smallmatrix}
+\Delta x &
+\Delta y
+\end{smallmatrix}
+\right)
+\left(
+\sum \left(
+\begin{smallmatrix}
+I_x^2 & I_x I_y\\
+I_x I_y & I_y^2
+\end{smallmatrix}
+\right)
+\right)
+\left(
+\begin{smallmatrix}
+\Delta x\\
+\Delta y
+\end{smallmatrix}
+\right)
+= \left(\begin{smallmatrix}
+\Delta x &
+\Delta y
+\end{smallmatrix}
+\right)
+\mat M
+\left(
+\begin{smallmatrix}
+\Delta x\\
+\Delta y
+\end{smallmatrix}
+\right)
+$
+
+$\mat M$ second moment matrix
+
+\begin{minipage}{0.35\linewidth}
+	\includegraphics[width=\linewidth]{img/harris_corner}
+\end{minipage}
+\begin{minipage}{0.65\linewidth}
+	Pick position where both EV $(\lambda_1, \lambda_2)$ are large.
+	
+	$C_{\text{SHI-TOMASI}} =\min(\lambda_1, \lambda_2) < \text{threshold}$
+	
+	$C$: cornerness  function (EV expensive)
+	
+	$ C = \min(\lambda_1, \lambda_2) \approx \det(M) - \kappa \text{trace}(M)^2$
+	
+	$ \kappa \in [0.04, 0.15]$
+	
+	Pick local maxima of thresholded $C$
+\end{minipage}
+
+\begin{itemize}
+\item robust to constant \textbf{illumination} changes (gradient is invariant), invariant under affine intensity changes
+\item invariant to image \textbf{rotation} (ellipse rotates but shape is kept)
+\item non-invariant to image scale! (and affine transformations)
+\end{itemize}
+
+%\par\noindent\rule{\linewidth}{0.4pt}
+\hrule
+\vspace{4pt}
+
+\textbf{Scale invariant detection}
+
+scale invariant function (single maxima, non-flat) on image patch, local maxima in each image define the corresponding patch sizes
+
+\textbf{Blob}: distinctive image pattern (intensity and texture diff.) highly distinctive, less localization accuracy than corner
+
+\textbf{Laplacian of Gaussian}:	Blob detector (also called LoG),	for different $\sigma (\sigma, \sigma^2) \rightarrow$ find extrema over position and scale
+
+\textbf{Difference of Gaussian}: Blob detector (also called DoG) often used as approx. of LoG (comp. cheaper)
+
+%\par\noindent\rule{\linewidth}{0.4pt}
+\hrule
+\vspace{4pt}
+
+\textbf{SIFT}: Scale Invariant Feature Transform (Lowe 2004)
+
+SIFT detector: keypoints are local extrema in the DoG scale pyramid, scale detection and descriptor extraction are a comp. expensive
+
+\begin{minipage}{0.6\linewidth}
+	SIFT descriptor  (slow matching): centered on keypoint with	dominant gradient orientation, divide into 4x4 sub-patches, compute HoG (histogram of oriented gradients, 8 reference angles), resulting in 4x4x8=128 values, location (2), scale, orientation
+\end{minipage}
+\begin{minipage}{0.40\linewidth}
+	\includegraphics[width=\linewidth]{img/sift}
+\end{minipage}
+Descriptor matching with Euclidean distance (SSD), \enquote{invariant} up to 60 degrees of 3D rotation, to scale \& \textbf{illumination}, invariant to similarities (\textbf{scale, transformation, rotation})
+
+\begin{minipage}{0.77\linewidth}
+	\textbf{FAST Corner Detector}: Features from Accelerated Segment Test
+	
+	Pixel C considered, typ. 16 point circle around
+	
+	FAST corner if N contiguous pixel brighter/darker than C+threshold, typ. N=12
+	
+	Very fast detector!
+\end{minipage}
+\begin{minipage}{0.22\linewidth}
+	\includegraphics[width=\linewidth]{img/fast}
+\end{minipage}
+
+\textbf{BRIEF descriptor}: Binary Robust Independent Elementary Features
+
+Concatenation of simple intensity tests between random pixel pairs
+
+\begin{itemize}
+	\item Pattern of random pixel pairs: pre-selected
+	\item Not scale/rotation invariant (extensions exist…)
+	\item Allows very fast Hamming Distance matching:
+	count the number of bits that are different in the descriptors matched
+\end{itemize}
+
+\textbf{BRISK descriptor}: Binary Robust Invariant Scalable Keypoints	
+
+High-speed (faster than SIFT, SURF), Rotation and scale invariant
+
+Binary, formed by pairwise intensity comparisons (like BRIEF)
+
+Pattern defines intensity comparisons in the keypoint neighborhood
+\begin{minipage}{0.74\linewidth}
+Red circles: size of the smoothing kernel applied
+
+Blue circles: smoothed pixel value used
+
+Compare short- and long-distance pairs for orientation assignment \& descriptor formation
+
+Detection and descriptor speed: $\approx 10$ times faster than SURF (and even faster than SIFT)
+
+Slower than BRIEF, but scale- and rotation- invariant
+\end{minipage}
+\begin{minipage}{0.25\linewidth}
+	\includegraphics[width=\linewidth]{img/brisk}
+\end{minipage}
+
+
+\subsubsection*{Line Extraction (also see section Uncertainty Representation)}
+
+Line extraction from point cloud; Problems: number of lines, segmentation (which point on which line), line fitting/extraction
+
+\textbf{Split-and-Merge} (fastest, not as robust \& relies on sequential data)
+\begin{itemize}
+	\item \textbf{Split}: Fit a line to points (alternative end-point-fit), find most distant point, split set if above threshold, repeat until conv.
+	\item \textbf{Merge}: If two consecutive segments are collinear enough, obtain common line \& merge segments if most distant point below threshold
+\end{itemize}
+
+\textbf{Line Regression}
+
+Initialize sliding window of size $N_f$, fit a line to every $N_f$ consecutive points (i.e. in each window), merge overlapping line segments, recompute line parameters for merged segments
+
+\textbf{Hough-Transform} (can also be used to detect other shapes)
+\begin{itemize}
+	\item Every point defines a line in Hough space of possible $b, m$ (parameters of possible lines $y=mx+b$ through point)
+	\item alt. representation: polar space $\rightarrow$ sinusoid in Hough space, $x\cos \theta + y \sin \theta = \rho$ 
+\end{itemize}
+
+\begin{enumerate}
+	\item For each point (x,y) calculate $\rho$ for all $\theta$  and vote for it 
+	\item Find values of $\theta \in [0,\pi], \rho$ with maximal local votes (increase counter)
+	\item line given by by $ \rho = x\cos \theta + y \sin \theta $ 
+\end{enumerate}
+
+noise makes selection of maxima difficult $\rightarrow$ prev. Gaussian filtering
+
+
+\textbf{RANSAC Random Sample Consensus}
+
+\begin{enumerate}
+	\item Randomly select sample of two (or $d$) points ($n(n-1)/2$ possibilities for $d=2$)
+	\item Fit a line through the two points, store line parameters
+	\item Calculate the distances of all other points to this line
+	\item Construct the inlier set (distance < threshold), store \# of inliers
+	\item repeat sampling for $k$ iteration, solution: set with max \# of inliers  
+\end{enumerate}
+$( 1 - w^d)^k= 1-p$, $\quad w$: fraction of inliers, $p$: probability of success, $d$: model dimension
+$\Rightarrow k = \frac{\log(1-p)}{\log(1-w^d)}$
+
+Iterative and non-deterministic, standard method for model fitting in the presence of outliers
+
+
+\subsubsection*{Place Recognition}
+
+\textbf{Bag of Words (BoW)}: try to build an index as for words in docs
+
+Feature based object recognition gets comp. very expensive due to infinite distinct SIFT features $\rightarrow$ map features to visual words obtained by k-means clustering of training data
+
+\textbf{K-means clustering}: partition $n$ observations into $k$ clusters 
+\begin{enumerate}
+	\item Randomly initialize $k$ cluster centers $m_k$
+	\item Iterate until convergence
+	\begin{enumerate}
+		\item Assign each data point to the nearest center $m_k$
+		\item Recompute each $m_k$ as the mean of all points assigned to it
+	\end{enumerate}
+\end{enumerate}
+$\rightarrow$ results in vocabulary of visual words, hierarchical clustering for efficiency
+
+\begin{itemize}
+	\item Can describe scene as a collection of words and look in database for similar collections of words
+	\item To efficiently find matches: vocabulary tree or Inverted File DB
+	\item Inverted File DB lists all possible visual words and each word points to a list of images containing the word
+	voting array: each word in query images votes for its images
+	\item Visual vocabulary holds appearance info., but discards spatial relationships between features, need to use geometric verification (e.g. RANSAC)
+\end{itemize}
+
+\includegraphics[width=\columnwidth]{img/ifdb}
+
+\textbf{term frequency-inverse document frequency} (tf-idf): measures the importance of a word inside a document
+
+term-frequency: frequency of word $w_i$ in image $j$: $\text{tf}_{ij} = \frac{n_{i,j}}{\sum_k n_{k,j}}$
+
+inv. document frequency: $\text{idf}_i = \log \frac{|D|}{|\{d:w_i\in d\}|} = \log \frac{\text{\# of all images}}{\text{\# of images cointaining} w_i}$
+
+tf-idf of word $w_i$ in image $j$ is: $\text{tf-idf} = \text{tf}_{ij}\cdot \text{idf}_i$
+
+\textbf{FABMAP}: place recognition for robots, build the visual vocabulary using SURF features, computes probability of being at a known place, suppresses common (i.e. frequent) scene structures
+
+\textbf{SeqSLAM}: Visual Route-Based Navigation for Sunny Summer Days \& Stormy Winter Nights, works w/ extreme illumination changes, builds image-diff. matrix, recognizes loop when scene is revisited w/ same speed \& viewpoint
+
+\textbf{BoBW}: Bag of Binary Words
+FAST keypoints + BRIEF descriptor, fast but not viewpoint-invariant
+
+
+\section*{Localization}
+Differently than for behavior-based navigation, map-based navigation requires the knowledge of the robot’s location
+
+\textbf{Global localization}: initial position unknown, uniform distribution for $\text{bel}(x_0)$
+
+\textbf{Position tracking}: initial position known (low uncertainty)
+
+\textbf{Kidnapped robot problem}: realize that robot was kidnapped $\rightarrow$ global localization afterwards
+
+\subsection*{Probabilistic Localization}
+\textbf{Belief representation}
+
+\begin{minipage}{0.62\linewidth}
+	\begin{enumerate}[label=\alph*)]
+		\item Continuous map with single-hypothesis belief, e.g., single Gaussian centered at a single continuous value.
+		\item Continuous map with multiple-hypothesis belief, e.g;. multiple Gaussians centered	at multiple continuous values.
+		\item Discretized (decomposed) grid map with probability values	for all possible robot positions, e.g., Markov approach.
+		\item Discretized topological map with probability value for all possible nodes (topological robot positions), e.g., Markov approach.
+	\end{enumerate}
+\end{minipage}
+\begin{minipage}{0.38\linewidth}
+	\includegraphics[width=\columnwidth]{img/belief_representation}
+\end{minipage}
+
+\textbf{Continuous}: Precision bound by sensor data, typically single hypothesis (danger of getting lost)
+
+\textbf{Discretized}: Precision bound by resolution of discretization, typically multiple hypothesis, a lot of computation
+
+\subsection*{Odometry (use for Prediction Update in KF/EKF)}
+Calculating vehicle's current position by using a previously determined position and estimated speeds over the elapsed time, Robot motion is recovered by integrating proprioceptive sensor velocities readings
+
+\textbf{Differential Robot}:
+
+{\centering 
+$\hat{\vec x}_t = f(\vec x_{t-1}, \vec u_t) =
+\begin{pmatrix}
+x_{t-1}\\
+y_{t-1}\\
+\theta_{t-1}\\
+\end{pmatrix}
++ 
+\begin{pmatrix}
+\Delta s \cos(\theta + \Delta\theta/2)\\
+\Delta s \sin(\theta + \Delta\theta/2)\\
+\Delta \theta\\
+\end{pmatrix}
+$
+
+$ \vec u_t = (\Delta s_r, \Delta s_l)^T, \quad \Delta s = \frac{\Delta s_r + \Delta s_l}{2}, \quad \Delta \theta = \frac{\Delta s_r - \Delta s_l}{b}$
+
+$ \hat{\mat P}_t = 
+\mat F_{\vec x} \mat P_{t-1} \mat F_{\vec x}^T 
++ 
+\mat F_{\vec u} \mat Q_{t} \mat F_{\vec u}^T
+,\quad
+\mat Q_t = \diag(k_r|\Delta s_r|, k_l|\Delta s_l|)
+$
+
+\par}
+
+Assumption of Gaussian Errors not correct but suitable
+
+occurring errors (besides integration errors from low resolution)
+
+\textbf{deterministic}: misalignment of wheels, wheel diameters
+
+\textbf{non-deterministic}: variation of contact point, slippage, …
+
+\subsection*{Map-Based Localization}
+Ingredients of probabilistic \textbf{map-based localization}:
+\begin{enumerate}
+	\item The initial probability distribution $\text{bel}(\vec x_0)$.
+	\item \textit{True} \textbf{map} $\vec M = \{\vec m_0, \ldots, \vec m_n\}$ of the environment.
+	\item Data: $\vec u_t$ (proprioceptive, control), $\vec z_t$ (exteroceptive).
+	\item Probabilistic \textbf{motion model} $p(\vec x_t|\vec u_t, \vec x_{t-1})$, e.g. based on
+	noise-free model $\vec x_t = f(\vec x_{t-1}, \vec u_t)$.
+	\item Probabilistic \textbf{measurement model} $p(\vec z_t|\vec x_t,\vec M)$, e.g. based on
+	noise-free model $\vec z_t = h(\vec x_t, \vec M)$.
+\end{enumerate}
+
+\textbf{Map representations}:
+\begin{itemize}
+	\item Continuous line-based: architecture map, set of lines
+	\item Exact cell decomposition: polygons
+	\item Fixed cell decomposition: occupancy grid, loose narrow passages, grid map
+	\item Adaptive cell decomposition: higher resolution where necessary
+	\item Topological map: graph representation, no scale and distances
+\end{itemize}
+
+\subsubsection*{Markov Localization}
+
+In planar motion requires a 3D grid-map array $(x,y,\theta)$, cell size must be chosen carefully,
+prediction and measurement update performed for all cells
+
+\textbf{Markov assumption}: $p(\vec x_t|\vec x_{t-1}, \vec u_t, \vec z_t)$ (only previous state relevant)
+
+\begin{enumerate}
+	\item \textbf{Prediction/Prior Update}: (ACT)\\
+	$\overline{\text{bel}}(\vec x_t) = \sum_{\vec x_{t-1}} p(\vec x_t | \vec u_t, \vec x_{t-1}) \text{bel}(\vec x_{t-1})$
+	\item \textbf{Measurement/Posteriori Update}: (SEE), $M$: Map, $\eta$: normalization\\
+	$\text{bel}(\vec x_t) = \eta p(\vec z_t| \vec x_t, \vec M) \overline{\text{bel}}(\vec x_{t})$
+\end{enumerate}
+
+Enhancements:
+\begin{itemize}
+	\item Reducing cell size or adapting cell size to structure
+	\item Motion model (odometry) limited to a small number of grid points
+	\item Randomized sampling $\rightarrow$ particle filter, reduce number of states updated each step, representing belief by representative subset, weighted to put more samples around local peaks of p, randomly distributed particles allow recovery if robot gets lost	
+\end{itemize}
+
+\textbf{Pros}:	start from any unknown position (kidnapped robot), recovers from ambiguous situations
+
+\textbf{Cons}:	discrete representation required (grid), computationally expensive (processing power \& memory)
+
+
+\subsubsection*{Extended Kalman Filter (EKF) Localization} 
+Assumes $\text{bel}(x_t) = \mathcal N (x_t, P_t)$ and linear model (or use EKF (linearization))
+
+\begin{enumerate}
+	\item \textbf{Prediction}: ($\mat Q_t$: cov. of motion model
+	noise, $F_{x/u}$: Jac. w.r.t. $\vec x$/$\vec u$):
+\begin{center}
+	$
+	\hat{\vec x}_t = f(\vec x_{t-1}, \vec u_t), \quad
+	\hat{\mat P}_t = 
+	\mat F_{\vec x} \mat P_{t-1} \mat F_{\vec x}^T 
+	+ 
+	\mat F_{\vec u} \mat Q_{t} \mat F_{\vec u}^T
+	$
+\end{center}
+
+	\item \textbf{Measurement}:
+
+\begin{enumerate}
+	\item \textit{Observation}: Obtain $\vec z_t^i$ with
+	covariance $\mat R_t^i$ ($i=1..n$).
+	\item \textit{Measurement prediction}: Predict $\hat{\vec{z}}_t^j = \vec{h}^j(\hat{\vec{x}}_t, \vec{m}^j)$,
+	compute its Jacobian $\mat{H}^j$ w.r.t $\hat{\vec{x}}_t$.
+	\item \textit{Matching step}: Compute the \textbf{innovation}
+	(\textbf{covariance})
+	
+	\begin{center}
+		$
+		\vec{v}_t^{ij}=\vec{z}_t^i - \hat{\vec{z}}_t^j,\quad
+		\mat{\Sigma}_{IN_t}^{ij} = \mat{H}^j \hat{\mat{P}}_t {\mat{H}^j}^T + \mat{R}_t^i,$
+	\end{center}
+	
+	Find matches with a \textbf{validation gate} $g$, e.g. Mahalanobis distance:
+	$\vec{v}_{t}^{{ij}^T} (\mat{\Sigma}_{IN_t}^{ij})^{-1} \vec{v}_t^{ij} \le g^2$.
+	
+	\item \textit{Estimation step}: Stack validated observations into $\vec{z}_t$, corresponding
+	innovations into $\vec v_t$, measurement Jacobians into $\mat H_t$ and
+	$\mat R_t = \diag(\mat R_t^i)$, compute $\mat \Sigma_{IN_t}$. Update the robot's
+	state estimate as
+	
+	\begin{center}
+		$
+		\vec x_t = \hat{\vec x}_t + \mat K_t \vec v_t,\;\;
+		\mat P_t = \hat{\vec P}_t - \mat K_t \mat{\Sigma}_{IN_t}\mat{K}_t^T = (\mat I - \mat K_t \mat H_t)\hat{\vec P}_t,
+		$
+	\end{center}
+	
+	with the \textbf{Kalman gain}: $
+		\mat K_t = \hat{\mat{P}}_t \mat{H}_t^T (\mat{ \Sigma}_{IN_t})^{-1}.
+		$
+\end{enumerate}
+\end{enumerate}
+
+\begin{minipage}{0.75\linewidth}
+	\includegraphics[width=\linewidth]{img/estimation}
+\end{minipage}
+\begin{minipage}{0.24\linewidth}
+		\textbf{Pros}: Precise and efficient robot tracking
+		
+		\textbf{Cons}: Fail if uncertainty gets too large and robot gets lost
+\end{minipage}
+
+
+\subsection*{SLAM (Simultaneous Localization and Mapping)}
+
+Robot \textbf{estimates its position and builds a map in parallel} using observations by its on-board sensors and on-board computation
+
+\begin{itemize}
+\item necessary for full autonomy, if no prior information about environment and no external beacons or GPS available
+\item scene features serve as landmarks (visual or geometric features)
+\item Predecessors: Structure from Motion: Estimate 3D structure from sequence of images (unordered), not real-time
+\end{itemize}
+
+Robot path: $\{\vec x_0, \ldots, \vec x_t\}$, Motion/control input: $\{\vec u_0, \ldots, \vec u_t\}$
+
+Map: $\{\vec m_0, \ldots, \vec m_n\}$, Measurements/Observations: $\{\vec z_0, \ldots, \vec z_k\}$
+
+{\centering
+	\includegraphics[width=0.8\linewidth]{img/slam_graph}
+\par}
+
+\textbf{Full SLAM}: $p(\vec x_{0:t}, \vec m_{0:N}| \vec z_{0:k}, \vec u_{0:t})$
+
+\textbf{Online SLAM}: $p(\vec x_t, \vec m_{0:N}| \vec z_{0:k}, \vec u_{0:t})$
+
+On every frame:
+\begin{enumerate}
+\item Predict robot motion (motion model)
+\item Measure landmarks
+\item Update internal representation (measurement model)
+\end{enumerate}
+
+Map becomes correlated with the robot pose estimate
+
+\textbf{Loop closure \& Redetection}: uncertainty of robot pose and landmarks shrinks; features become correlated when motion is coherent, strong correlation is important for solution to converge
+
+\textit{Approaches}: 
+\begin{itemize}
+	\item \textbf{Bundle Adjustment} (\textbf{Full Graph Optimization}): 
+	Find globally consistent solution, solve for constraints between poses and landmarks, for real-time performance graph has to be sparsified, back-propagating of information in time, computationally demanding, difficult to estimate online
+	
+	{\centering
+		\includegraphics[width=0.6\linewidth]{img/ba}
+	\par}
+	
+	\item \textbf{Filtering}:
+	Summarize all past experience using extended state vector with observed landmarks $\vec y_t$ and covariance matrix $\mat P_{y_t}$
+	\begin{itemize}
+		\item \textbf{Gaussian EKF}: runs online, noise has to be similar to Guassian, only one hypothesis
+		\item \textbf{Particle Filter}: particles represent a suggested pose \& map with associated weight, feature uncertainty encoded for every particle individually, re-weight particles with quality of predictions and normalize, re-sample according to likelihood, can track multiple hypothesis, does not scale to large environments, easy to implement, any distributions (e.g. multi modal), many particles needed for good convergence
+	\end{itemize}	
+	{\centering
+		\includegraphics[width=0.6\linewidth]{img/filtering}
+	\par}
+	\item \textbf{Keyframe-based}: Only keep most representative poses, minimize least square error between window of last keyframes,	allows to track more features per frame than filtering,	window size affects scalability and convergence	
+	
+	{\centering
+		\includegraphics[width=0.6\linewidth]{img/keyframes}
+	\par}
+\end{itemize}
+
+\subsubsection*{EKF SLAM (here e.g. differential robot)}
+\begin{itemize}
+	\item As in EKF localization but with bigger state vector
+	\item The position of the features remains unchanged in the prediction step
+\end{itemize}
+{\centering 
+	$\vec y_t =
+	\begin{pmatrix}
+	x_t & y_t&\theta_t&\alpha_1&r_1&\ldots&\alpha_N&r_N
+	\end{pmatrix}^T
+	$
+\par}
+
+Cons: 
+\begin{itemize}
+\item State vector in EKF SLAM is much larger than state vector in EKF localization
+\item Newly observed features are added to state vector a, covariance matrix grows quadratically with \# features a comp. expensive for large-scale SLAM.
+\item $\rightarrow$ Sparsify the structure of the covariance matrix (via approximations)
+\end{itemize}
+
+\textbf{MonoSLAM}: Example of EKF SLAM
+
+\begin{itemize}
+	\item Single camera
+	\item Extract Shi-Tomas features \& track them in image space
+	\item State vector: Position, Orientation (quaternions 4 dim.), Linear velocity, Angular velocity
+	\item Constant linear/angular velocity motion model
+	\item Accelerations characterized by zero-mean Gaussian distribution (motion model), $\vec \Omega^W = \vec{\alpha}^W\Delta t, \vec V^W = \vec{a}^W\Delta t$
+	\item Use image features as measurement
+\end{itemize}
+
+{\centering 
+	$
+	\vec f_v
+	=
+	\left[
+	\begin{matrix}
+	\vec r_\mathrm{new}^W \\
+	\vec q_\mathrm{new}^{WR} \\
+	\vec v_\mathrm{new}^W \\
+	\vec \omega_\mathrm{new}^W
+	\end{matrix}
+	\right]
+	=
+	\left[
+	\begin{matrix}
+	\vec r^W
+	+ (\vec v^W + \vec V^W)\Delta t \\
+	\vec q^{WR}
+	\times \vec q((\omega^W+\vec\Omega^W)\Delta t)\\
+	\vec v^W + \vec V^W\\
+	\vec \omega^W + \vec \Omega^W
+	\end{matrix}
+	\right]
+	$ (eq. for cam state)
+\par}
+
+\subsubsection*{Scalable SLAM}
+\textbf{Challenges}: Robust local motion estimation, mapping \& loop closure detection, map management \& optimization
+
+trade-off between precision and efficiency, need to handle larger amounts of data more effectively,	option to use dense tracking of all pixels at high framerate, to allow scalability the structure of the covariance matrix must be sparsified (grows quadratically with \# of features), same problem as Structure from Motion but real-time \& in order
+
+\textbf{Challenges in vision-based perception according to V4RL}
+\begin{itemize}
+	\item High fidelity ego-motion \& scene estimation \\
+	$\rightarrow$ event-cameras, sensor fusion, deep learning, place recognition
+	\item Scene reconstruction for interaction and path planing
+	\item Multi-agent collaboration\\
+	$\rightarrow$ Visual SLAM with local BA, merging of maps on central server
+\end{itemize}
+
+\subsubsection*{SLAM systems}
+\begin{itemize}
+\item \textbf{MonoSLAM}: EKF
+\item \textbf{PTAM}: keyframe based
+\item \textbf{Graph-SLAM}: hybrid
+\item \textbf{ORB-SLAM}: monocular SLAM, ORB features, keyframe-based, binary place recognition
+\item \textbf{OKVIS}: visual-inertial \st{SLAM} odometry (no loop closure, no place recognition), BRISK features, keframe-based , monocular and stereo vision
+\item \textbf{ROVIO}: EKF based, ShiTomasi features (different scales), odometry \st{SLAM}
+\item \textbf{VINS-mono}: keyframe-based, SLAM tightly coupled visual-inertial odometry with relocalization, Shi-Tomasi features, BRIEF descriptors for localization	
+\end{itemize}
+
+\section*{Planning}
+\textbf{Work-space}: representation in world coordinates\\
+\textbf{Configuration-space}: representation in generalized coordinates, full state of the robot in the world (actuator positions, orientation, etc.)
+
+Why use configuration space? positions in conf. space tend to be close together for the robot, often easier to solve collision checks, abstraction such that solution methods can solve wider range of problems, can help with warp around conditions (rotation joints)
+
+Path planning methods often uses an hierarchical decomposition:
+
+\textbf{Motion Control - Local Collision Avoidance - Global Search-Based Planning}
+
+\subsection*{Representation}
+
+Continuous space if often discretized into graph representation (directed or undirected).
+
+Methods to construct the graph
+
+\begin{itemize}
+	\item \textbf{Grid/Lattice-based}: Standard grid gets converted to graph, loss of precision, selection of appropriate grid resolution is challenging ($\rightarrow$ multi-resolution, e.g. quad-/oct-tree), limits type of output path (C0), poor scaling in higher dimensions\\
+	Improve with circular arcs in grid (C1)
+%	\item \textbf{Grid lattice}: Set of feasible motion primitives construct a tree (graph) that chains the motions into a sequence (plan)
+	\item \textbf{Visibility graph}: create edges between all pairs of mutually visible vertices (of obstacles), limited to straight motion, 2D, polygonal obstacles
+	\item \textbf{Randomly-sampled graphs}: randomly sample graph nodes
+	\item \textbf{Voronoi diagram}: works only on closed workspace (considers boundary as obstacle), maximizes the minimal distance to obstacles, does not contain shortest path, robot dynamics not included
+\end{itemize}
+
+\subsection*{Graph Search Methods}
+The graph arising from the problem has to be searched to find a path with minimal cost. Only positive edge weights are considered. Graph: $G = (V, E)$
+
+\subsubsection*{Breadth-First Search (BFS) $\mathcal{O} (|V| + |E|)$}
+
+\begin{minipage}{0.6\linewidth}
+Deterministic, greedy, complete (will find solutions if it exists), path with globally lowest cost, FIFO queue, closed list, requires \textbf{identical positive costs}, optimal for arbitrary positive costs if search is continued until queue is empty
+
+\textbf{Depth-first} (LIFO):
+good to find one solution fast, not complete for infinity trees, lower memory footprint
+
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+	\includegraphics[width=\linewidth]{img/bfs}
+\end{minipage}
+
+\subsubsection*{Dijkstra's Algorithm $\mathcal{O} (|V|\log|V| + |E|)$}
+Non-uniform positive edge weights (costs), always \textbf{expand node with lowest cost so far} (closest to start)
+
+\begin{minipage}{0.5\linewidth}
+	\includegraphics[width=\linewidth]{img/min_heap}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+	\includegraphics[width=\linewidth]{img/dijkstra}
+\end{minipage}
+
+Start from goal $\rightarrow$ lowest cost path from any starting locations
+
+\subsubsection*{A* Algorithm }
+
+
+\begin{minipage}{0.55\linewidth}
+	Non-uniform positive edge weights (costs), deterministic, greedy, expands nodes with lowest expected costs:
+	
+	{\centering
+	$f(V) = \underbrace{g(V)}_{\substack{\text{cost so far} \\
+			\text{(from start)}}}
+	+ \underbrace{h(V)}_{\substack{
+			\text{heuristic} \\ \text{cost-to-go}
+		}
+	}$
+	\par}
+\end{minipage}
+\begin{minipage}{0.45\linewidth}
+	\includegraphics[width=\linewidth]{img/a_star}
+\end{minipage}
+
+\textbf{Admissible}: $h(x) \leq d(x,\text{goal})$ ($d$ true cost to goal)
+
+\textbf{Consistent}: For any pair of adjacent nodes $x$ and $y$ with $d(x,y)$ between them, $ h(x) \leq d(x,y) + h(y)$
+
+
+e.g. Manhatten distance, Euclidean distance, Zero (Dijkstra algorithm)
+
+\textbf{D*}: Incremental replanning version of A*
+
+\subsubsection*{Randomized Graph Search}
+Randomized node expansion step,	usually online graph construction, appropriate if high-dimensionality
+
+\begin{minipage}{0.55\linewidth}
+	\textbf{RRT algorithm} (rapidly exploring random tree)
+	\begin{itemize}
+		\item grows randomized tree
+		\item terminates if close to goal state
+		\item almost surely sub-optimal solutions; needs collision detection
+		\item probabilistic complete (a solution is found in infinite time)
+	\end{itemize}
+\end{minipage}
+\begin{minipage}{0.45\linewidth}
+	\includegraphics[width=\linewidth]{img/rrt}
+\end{minipage}
+
+Improve by bi-/multi-directional version (multiple trees are growing)
+
+\textbf{PRM} (Probabilistic Roadmaps): 1. \enquote{offline} roadmap construction, 2. Search; narrow passage problem, requires holonomic motion
+
+\textbf{Metrics}: Which sense of proximity should be used? Rotation vs Translation
+
+\textbf{Planning under Differential Constraints}: Use RRT, sample controls to generate feasible local paths and choose configuration that gets closest to the target configuration (incrementally growing - forming a tree)
+
+
+\subsubsection*{Planning under Uncertainty}
+Environment  and Motion uncertainty $\rightarrow$ Markov Decision Process (MDP)
+
+
+\subsection*{Collision Avoidance}
+Light on comp. resources, purely local methods $\rightarrow$ prone to local optima, needed due to environment and motion uncertainty
+
+\subsubsection*{Dynamic Window Approach (DWA) (0-order)}
+Collision avoidance in $(v,\omega)$ input space (circular arcs)
+\begin{itemize}
+	\item Determine static window (motor limits, safety boundaries) $\rightarrow V_S$
+	\item Account for vehicle dynamics by dynamic window $\rightarrow V_d$
+	\item Transform object from work space to configuration space $\rightarrow V_o$ (admissible $V_a$), computationally expensive, sample withing $V_s \cap V_d$
+	\item Select configuration withing $V_r = V_a \cap V_s \cap V_d$ maximizing local objective (e.g. heading distance to goal, velocity)
+\end{itemize}
+
+{\centering 
+\begin{minipage}{0.40\linewidth}
+		\includegraphics[width=\linewidth]{img/dwa_ws}
+\end{minipage}
+\begin{minipage}{0.40\linewidth}
+		\begin{overpic}[width=\linewidth]{img/dwa}
+			\put (52,47) {\large$V_d$}
+			\put (-4,60) {\large$V_s$}
+			\put (59,65) {\large$V_o$}
+			\put (20,20) {\large$V_a$}
+		\end{overpic}
+\end{minipage}
+\par}
+
+accounts for robot dynamics, prone to local optima, assumes static objects
+
+\subsubsection*{Velocity Obstacles (VO) (1st order prediction)}
+
+Assumes omnidirectional robot, works in velocity space, \textbf{Velocity Obstacle} composed of all velocities leading to a collision before a time horizon $\tau$ 
+\begin{enumerate}
+	\item Compute set of colliding velocities.
+	\item Restrict to set of colliding velocities within time horizon $\tau$.
+	\item Shift	VO by instantaneous obstacle velocity $\vec v$.
+\end{enumerate}
+
+$|| \vec p_{RO} - \vec v_R t|| < r_R + r_O = r_{RO}$
+
+$\text{VO}_{RO}^\tau = \bigcup\limits_{0\leq t \leq \tau} \text{Disk}\left(\frac{\vec p_{RO}}{t}, \frac{r_{RO}}{t}\right)$ ($\rightarrow$ shift with $\vec v$ of other object)
+
+\begin{minipage}{0.24\linewidth}
+		\includegraphics[width=\linewidth]{img/vo_1}
+\end{minipage}
+\begin{minipage}{0.24\linewidth}
+		\includegraphics[width=\linewidth]{img/vo_2}
+\end{minipage}
+\begin{minipage}{0.24\linewidth}
+		\includegraphics[width=\linewidth]{img/vo_3}
+\end{minipage}
+\begin{minipage}{0.24\linewidth}
+		\includegraphics[width=\linewidth]{img/vo_4}
+\end{minipage}
+
+Approximate non-circular object by set of circles
+
+\subsubsection*{Reciprocal Velocity Obstacles (RVO)}
+Interactive collision avoidance, omnidirectional system model $\rightarrow$ interaction effects of deciding agents, fairness property
+
+\begin{minipage}{0.65\linewidth}
+linear constraint at closest boundary of VO
+
+\begin{itemize}
+	\item If current relative velocity leads to collision:\\
+	Shift at least with half the velocity difference (VD) to the linear constraint
+	\item If not in collision:\\
+	Shift at maximum with half the VD towards the lin. constraint
+\end{itemize}
+
+\end{minipage}
+\begin{minipage}{0.34\linewidth}
+		\includegraphics[width=\linewidth]{img/rvo}
+\end{minipage}
+
+\subsection*{Potential Field Methods}
+
+Robot follows gradient of potential fields, incorporate basic system models, global characteristic, but sometimes prone to local optima
+
+\subsubsection*{Local Potential Fields (high potential at robot)}
+
+$
+U_\mathrm{att}(\vec q)
+=
+\frac{1}{2} k_\mathrm{att}(\vec q - \mathbf q_\mathrm{goal})^2$
+
+$
+U_\mathrm{rep}(\vec q)
+=
+\begin{cases}
+\frac{1}{2} k_\mathrm{rep} \left(\frac{1}{\rho(\vec q)}
+- \frac{1}{\rho_\mathrm{lim}}\right)^2& \mathrm{if } \rho(\vec q) \leq \rho_\mathrm{lim}\\
+0 & \mathrm{otherwise}
+\end{cases}
+$
+Control policy (summed potentials), no agent dynamic constraints, local minima possible
+
+\subsubsection*{Harmonic Potential Fields}
+Robot follows solution of Laplace equation: $\Delta U = \sum \frac{\partial^2 U}{\partial q_i^2} = 0$
+
+Only one solution exists $\rightarrow$ free of local minima (global method), control policy, can rarely be solved in closed form
+
+Boundary Conditions:
+\begin{itemize}
+\item \textbf{Neumann}: Equipotential lines orthogonal to obstacle boundaries (flow parallel), small distance to objects while passing
+\item \textbf{Dirichlet}: Obstacle boundaries have constant high potential, Goal low
+\end{itemize}
+
+Use iterative scheme with:
+$
+\nabla U(\mathbf q)_i
+\approx
+[U(\mathbf q + \delta e_i) - U(\mathbf q)]/\delta
+$
+
+{\centering
+	$
+	U^{k+1}(\mathbf q)
+	=
+	\frac{1}{2n} \sum_{i=1}^n(U^k(\mathbf q + \delta \mathbf e_i)
+	+ U^k(\mathbf q - \delta \mathbf e_i)),
+	$
+\par }
+
+$n$ \# of dimensions
+
+\subsection*{Other obstacle avoidance algorithms}
+\begin{enumerate}
+	\item \textbf{Bug algorithm}: Follow the boundary of an obstacle, depart from
+	point of shortest distance to the goal.
+	\item \textbf{Vector field histogram (VFH)}: Use polar histogram showing
+	probability of obstacle occurrence.
+	\item \textbf{Bubble band technique}: Compute bubbles representing max.
+	free space around given robot configuration.
+\end{enumerate}
+
+\section*{Misc}
+
+$\begin{pmatrix} a & b \\ c & d \end{pmatrix}^{-1} = \frac{1}{\det A} \cdot \begin{pmatrix} d & -b \\ -c & a \end{pmatrix} = \frac{1}{ad-bc} \cdot \begin{pmatrix} d & -b \\ -c & a \end{pmatrix}$
+{\centering 
+\includegraphics[width=0.8\linewidth]{img/kinematic_constraints}
+\par}
+
+\section*{Things we could add}
+\begin{itemize}
+	\item something for stability analysis (lecture 2, Poincaré map, see lecture slides (locomotion concepts))
+	\item wheel encoder (lecture) image, for explanation
+	\item line fitting in error propagation? (perception 4)
+	\item Comparison of algorithms for line extraction from 2D laser data. (AMR book or slides)
+	\item Replace graph search algorithms by general deterministic graph search algo (ZF 16 / latex)
+\end{itemize}
+
+\section*{Disclaimer}
+Based on the on work of F. Graube, C. Häberling, J. Mueller, M.Grimm, R. Käslin (SS 2018) and Fabian Blöchiger (SS 2016).
+
+Converted to \LaTeX~ and enhanced for the lecture of the Spring semester 2019 by Thomas Etterlin.
+
+No guarantees for correctness, please report errors.
+
+\end{multicols*}
+
+\end{document}

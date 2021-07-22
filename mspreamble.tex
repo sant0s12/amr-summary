@@ -1,0 +1,232 @@
+
+% ============================================================================
+%
+%								  MS Preamble v0.0
+%
+% ============================================================================
+
+
+%% Encoding
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+%% Date and time
+
+\usepackage{datetime}
+\newdateformat{onlymonthandyear}{\monthname[\THEMONTH] \THEYEAR}
+
+%% Graphics and related packages
+
+\usepackage{graphicx}
+\usepackage[all]{xy}
+\usepackage{tikz}
+	\usetikzlibrary{calc,positioning}
+	\tikzset{>=latex}
+\usepackage{pgfplots}
+\usepackage[framemethod=TikZ]{mdframed}
+\usepackage{listings}
+\usepackage{tabularx}
+\usepackage{wrapfig}
+
+% Define Colors
+\definecolor{black}{RGB}{0,0,0}
+\definecolor{white}{RGB}{255,255,255}
+\definecolor{msgray}{RGB}{120,120,120}
+\definecolor{msblue}{RGB}{11,93,174}
+\definecolor{msred}{RGB}{206,62,21}
+\definecolor{msyellow}{RGB}{232,163,26}
+\definecolor{msgreen}{RGB}{100,161,27}
+\definecolor{mspurple}{RGB}{106,20,125}
+\definecolor{mslightblue}{RGB}{59,175,236}
+\definecolor{msdarkred}{RGB}{145,0,33}
+
+%% Math
+
+\usepackage{amsmath,amsfonts,amssymb,bm,bbm,mathtools,mathrsfs,units,empheq}
+
+%% New Commands
+
+% Emphasized Equations
+\newcommand{\eqbox}[1]{\colorbox{\chosencolor!10}{#1}}
+\newcommand{\eeq}[1]{\vspace*{-0.2em}\begin{empheq}[outerbox=\eqbox]{align*} #1 \end{empheq}}
+
+% Number Sets
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\C}{\mathbb{C}}
+
+% Upright Euler Number and exponential
+\newcommand{\ee}{\mathrm{e}}
+\newcommand{\eexp}[1]{\ee^{#1}}
+
+% Real and Imaginary Operator and imaginary number
+\newcommand{\re}{\mathop{\mathrm{Re}}}
+\newcommand{\im}{\mathop{\mathrm{Im}}}
+\newcommand{\kplx}[1]{\underline{#1}}
+\newcommand{\jj}{\mathrm{j}}
+\newcommand{\kk}{\mathrm{k}}
+\newcommand{\quat}[1]{\vect{#1}}
+
+% Matrix Operators
+\newcommand{\mtrx}[1]{\left(\begin{matrix}#1\end{matrix}\right)}
+\newcommand{\mtrxb}[1]{\left[\begin{matrix}#1\end{matrix}\right]}
+\newcommand{\Rang}{\mathop{\mathrm{Rang}}}
+\newcommand{\Adj}{\mathop{\mathrm{Adj}}}
+\newcommand{\inv}{^{-1}}
+\newcommand{\jac}{\bm{\mathrm{J}}}
+
+% Derivatives
+\newcommand{\dd}{\hspace{1pt}\mathrm{d}}
+\newcommand{\ddt}[1][]{\frac{\dd {#1}}{\dd t}}
+\newcommand{\ddtt}[1][]{\frac{\dd^2 {#1}}{\dd t^2}}
+\newcommand{\ddtp}[1][]{\frac{\partial {#1}}{\partial t}}	
+\newcommand{\ddttp}[1][]{\frac{\partial^2 {#1}}{\partial t^2}}
+\newcommand{\ddx}[1][]{\frac{\dd {#1}}{\dd x}}
+\newcommand{\ddxx}[1][]{\frac{\dd^2 {#1}}{\dd x^2}}
+\newcommand{\ddxp}[1][]{\frac{\partial {#1}}{\partial x}}
+\newcommand{\ddxxp}[1][]{\frac{\partial^2 {#1}}{\partial x^2}}
+\newcommand{\ddp}[2]{\frac{\partial {#1}}{\partial {#2}}}
+\newcommand{\ddpp}[2]{\frac{\partial^2 {#1}}{\partial {#2}^2}}
+
+% Inverse Hyperbolic Functions
+\newcommand{\arctanh}{\mathop{\mathrm{arctanh}}}
+\newcommand{\arcsinh}{\mathop{\mathrm{arcsinh}}}
+\newcommand{\arcosh}{\mathop{\mathrm{arcosh}}}
+\newcommand{\arccot}{\mathop{\mathrm{arccot}}}
+
+% Relation Symbols
+\newcommand{\defeq}{\mathop{\vcentcolon=}}
+\newcommand{\eqdef}{\mathop{=\vcentcolon}}
+\newcommand{\meq}{\mathop{\stackrel{!}{=}}}
+\newcommand{\conf}{\mathop{\stackrel{\scriptscriptstyle\wedge}{=}}}
+\newcommand{\sclr}[1]{\left\langle #1 \right\rangle}
+
+% Vector Operators
+\newcommand{\grad}{\mathop{\vect{\nabla}}}
+\renewcommand{\div}{\mathop{\vect{\nabla}}}
+\newcommand{\diag}{\mathrm{diag}}
+\newcommand{\curl}{\mathop{\mathrm{curl}}}
+
+% Stochastics
+\newcommand{\prob}[2][]{{\mathbb{P}}_{#1}\!\left( #2 \right)}
+\newcommand{\ev}[2][]{\underset{#1}{\mathbb{E}}\!\left[#2\right]}
+\newcommand{\var}[2][]{\underset{#1}{\mathrm{Var}}\!\left(#2\right)}
+\newcommand{\gauss}[1]{\mathop{\mathcal{N}\pare{#1}}}
+\newcommand{\given}{\,|\,}
+\newcommand{\cov}[1]{\mathop{\mathrm{Cov}\!\left(#1\right)}\!{}}
+\newcommand{\corr}[1]{\mathop{\mathrm{Corr}\!\left(#1\right)}\!{}}
+
+% Parentethes
+\newcommand{\pare}[1]{\left( #1 \right)}
+\newcommand{\pareb}[1]{\left[ #1 \right]}
+\newcommand{\ang}[1]{\left\langle #1 \right\rangle}
+\newcommand{\abso}[1]{\left| #1 \right|}
+\newcommand{\norm}[1]{\left|\left| #1 \right|\right|}
+
+% Greek Letters
+\newcommand{\epsi}{\varepsilon}
+
+% Graphics
+\newcommand{\inlinegraphics}[3]{
+\par\begin{tabularx}{\linewidth}{@{}p{#3\linewidth} X @{}}
+\begin{minipage}{\linewidth} #1 \end{minipage} &
+\begin{minipage}{\linewidth}\includegraphics[width = \linewidth]{fig/#2}\end{minipage}
+\end{tabularx}\vspace*{0.25em}
+}
+
+\newcommand{\figr}[1]{
+\begin{center}
+	\includegraphics[width = \linewidth]{fig/#1}
+\end{center}
+}
+\newcommand{\figrsc}[2]{
+	\begin{center}
+	\includegraphics[width = #1\linewidth]{fig/#2}
+	\end{center}
+}
+\newcommand{\figrwr}[3]{
+	\begin{wrapfigure}{#1}{#2\linewidth}
+	\includegraphics[width = \linewidth]{fig/#3}
+	\end{wrapfigure}
+}
+
+\newcommand{\figrr}[2]{
+\begin{center}
+	\includegraphics[width = 0.49\linewidth]{fig/#1} \hfill
+	\includegraphics[width = 0.49\linewidth]{fig/#2}
+\end{center}
+}
+
+% Include single consecutive slide from a pdf
+\newcounter{currentSlide}
+\setcounter{currentSlide}{1}
+\newcommand{\nextslide}[1]{
+	\columnbreak
+	\begin{center}
+		\includegraphics[width = \linewidth, page = \value{currentSlide}]{#1}
+	\end{center}
+	\stepcounter{currentSlide}
+}
+
+% https://tex.stackexchange.com/questions/246688/scaling-ddots-in-smallmatrix
+\usepackage{letltxmacro}
+\LetLtxMacro\orgvdots\vdots
+\LetLtxMacro\orgddots\ddots
+
+\makeatletter
+\DeclareRobustCommand\vdots{%
+	\mathpalette\@vdots{}%
+}
+\newcommand*{\@vdots}[2]{%
+	% #1: math style
+	% #2: unused
+	\sbox0{$#1\cdotp\cdotp\cdotp\m@th$}%
+	\sbox2{$#1.\m@th$}%
+	\vbox{%
+		\dimen@=\wd0 %
+		\advance\dimen@ -3\ht2 %
+		\kern.5\dimen@
+		% remove side bearings
+		\dimen@=\wd2 %
+		\advance\dimen@ -\ht2 %
+		\dimen2=\wd0 %
+		\advance\dimen2 -\dimen@
+		\vbox to \dimen2{%
+			\offinterlineskip
+			\copy2 \vfill\copy2 \vfill\copy2 %
+		}%
+	}%
+}
+\DeclareRobustCommand\ddots{%
+	\mathinner{%
+		\mathpalette\@ddots{}%
+		\mkern\thinmuskip
+	}%
+}
+\newcommand*{\@ddots}[2]{%
+	% #1: math style
+	% #2: unused
+	\sbox0{$#1\cdotp\cdotp\cdotp\m@th$}%
+	\sbox2{$#1.\m@th$}%
+	\vbox{%
+		\dimen@=\wd0 %
+		\advance\dimen@ -3\ht2 %
+		\kern.5\dimen@
+		% remove side bearings
+		\dimen@=\wd2 %
+		\advance\dimen@ -\ht2 %
+		\dimen2=\wd0 %
+		\advance\dimen2 -\dimen@
+		\vbox to \dimen2{%
+			\offinterlineskip
+			\hbox{$#1\mathpunct{.}\m@th$}%
+			\vfill
+			\hbox{$#1\mathpunct{\kern\wd2}\mathpunct{.}\m@th$}%
+			\vfill
+			\hbox{$#1\mathpunct{\kern\wd2}\mathpunct{\kern\wd2}\mathpunct{.}\m@th$}%
+		}%
+	}%
+}
+\makeatother

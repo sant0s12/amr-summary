@@ -1,0 +1,6 @@
+README.pdf
+img/
+*.log
+*.aux
+*.fdb_latexmk
+*.synctex.gz

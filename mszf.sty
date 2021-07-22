@@ -1,0 +1,258 @@
+
+% ============================================================================
+%
+%								  MS ZF v0.3
+%
+% ============================================================================
+
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{mszf}
+
+\newif\ifingerman
+\DeclareOption{german}{\global\ingermantrue}
+\DeclareOption{english}{\global\ingermanfalse}
+
+\newif\ifvectorbold
+\DeclareOption{bold}{\global\vectorboldtrue}
+\DeclareOption{arrow}{\global\vectorboldfalse}
+
+\newif\ifcplxj
+\DeclareOption{j}{\global\cplxjtrue}
+\DeclareOption{i}{\global\cplxjfalse}
+
+\newif\ifblue
+\newif\ifred
+\newif\ifgreen
+\newif\ifgrey
+\DeclareOption{blue}{
+    \global\bluetrue
+    \global\redfalse
+    \global\greenfalse
+    \global\greyfalse
+}
+\DeclareOption{red}{
+    \global\bluefalse
+    \global\redtrue
+    \global\greenfalse
+    \global\greyfalse
+}
+\DeclareOption{green}{
+    \global\bluefalse
+    \global\redfalse
+    \global\greentrue
+    \global\greyfalse
+}
+\DeclareOption{grey}{
+    \global\bluefalse
+    \global\redfalse
+    \global\greenfalse
+    \global\greytrue
+}
+
+\ExecuteOptions{english,blue,bold,i}
+\ProcessOptions
+
+%% Name of Lecture
+
+\newcommand{\@lecturename}{}
+\newcommand{\lecturename}[1]{\gdef\@lecturename{#1}}
+
+\newcommand{\@email}{}
+\newcommand{\email}[1]{\gdef\@email{#1}}
+
+%% Language
+
+\ifingerman
+	\usepackage[german]{babel}
+\else
+	\usepackage[english]{babel}
+\fi
+
+%% Whitespace
+
+\setlength{\headheight}{0cm}
+\setlength{\headsep}{1.3em}
+\setlength{\footskip}{0.1cm}
+\setlength{\textheight}{19.7cm}
+
+\setlength{\parindent}{0.0em}
+\setlength{\parskip}{0em}
+\setlength{\topskip}{-2em}
+\setlength{\topsep}{0.4em}
+\setlength{\partopsep}{0.1em}
+
+\setlength{\tabcolsep}{0.2em}
+\renewcommand{\arraystretch}{1}
+\renewcommand{\arraycolsep}{0.5em}
+
+%% Landscape Layout with Columns
+
+\usepackage[
+	a4paper,
+	landscape,
+	left 			= 0.3cm,
+	right 			= 0.3cm,
+	top				= 0.3cm,
+	bottom			= 0.3cm,
+	nofoot,%
+	includehead,
+	headsep=0mm
+	]{geometry}
+
+%\usepackage{fancyhdr}
+%\pagestyle{fancy}
+%\fancyhf{}
+%\lhead{\textbf{\@lecturename}}
+%\rhead{\texttt{\@email}, \onlymonthandyear\today}
+%\ifingerman
+%	\chead{Seite \thepage}
+%\else
+%	\chead{Page \thepage}
+%\fi
+%\cfoot{}
+
+%\usepackage[page]{totalcount}
+%\usepackage[headsepline]{scrlayer-scrpage}
+%\clearpairofpagestyles
+%\ohead{\texttt{\@email}, \onlymonthandyear\today}
+%\ifingerman
+	%\chead{Seite \thepage}
+%\else
+	%\chead{Page \thepage}
+%\fi
+%\ihead{\textbf{\@lecturename}}
+%\setlength{\headheight}{6pt}
+
+
+
+\usepackage{multicol}
+	\setlength{\columnsep}{0.25cm}
+	\setlength{\columnseprule}{0.0cm}
+
+%% Coloring
+
+\usepackage[usenames,dvipsnames]{xcolor}
+\definecolor{msblue}{RGB}{11,93,174}
+\definecolor{msred}{RGB}{206,62,21}
+\definecolor{msgreen}{RGB}{100,161,27}
+\definecolor{msgrey}{RGB}{120,120,120}
+
+\newcommand{\chosencolor}{}
+\ifblue
+	\renewcommand{\chosencolor}{msblue}
+\fi
+\ifred
+	\renewcommand{\chosencolor}{msred}
+\fi
+\ifgreen
+	\renewcommand{\chosencolor}{msgreen}
+\fi
+\ifgrey
+	\renewcommand{\chosencolor}{msgrey}
+\fi
+
+%% Imaginary Numbers
+\newcommand{\ii}{}
+\ifcplxj
+	\renewcommand{\ii}{\mathrm{j}}
+\else
+	\renewcommand{\ii}{\mathrm{i}}
+\fi
+
+%% Vectors and Matrices
+%%\renewcommand{\vec}{}
+%%\ifvectorbold
+	%%\renewcommand{\vec}[1]{\bm{#1}}
+%%\else
+	%%\renewcommand{\vec}[1]{\vec{#1}}
+%%\fi
+
+%% Lists and enumerations
+
+\usepackage{enumitem}
+\setlist[enumerate]{
+	itemsep		= 0.0em,
+	topsep		= 0.1em,
+	parsep		= 0.1em,
+	itemindent	= 0.1em,
+	leftmargin		= 1em}
+\setlist[itemize]{
+	itemsep		= 0.0em,
+	topsep		= 0.1em,
+	parsep		= 0.1em,
+	itemindent	= 0.1em,
+	leftmargin		= 1em}
+\usepackage{multirow}
+
+%% Titledesign
+
+\usepackage{titlesec}
+
+\titleformat{\section}[display]{\bfseries\center\large}{}{}{\begin{sect}\color{white}\center}[\end{sect}]
+\titleformat{\subsection}[display]{\bfseries\large}{}{}{\begin{subsect}}[\end{subsect}]
+\titleformat{\subsubsection}[display]{\bfseries}{}{}{\begin{subsubsect}}[\end{subsubsect}]
+
+\titlespacing*{\section}
+{0.1em}{0.3em plus 0.1em minus 0.0em}{0.0em plus 0.0em}
+\titlespacing*{\subsection}
+{0.1em}{0.3em plus 0.1em minus 0.0em}{0.0em plus 0.0em}
+\titlespacing*{\subsubsection}
+{0.1em}{0.3em plus 0.1em minus 0.0em}{0.0em plus 0.0em}
+
+\newenvironment{sect}{
+\begin{mdframed}[
+	backgroundcolor			= \chosencolor,
+	linecolor					= none,
+	leftmargin					= -2pt,
+	rightmargin				= -2pt,
+	skipabove				= 0pt,
+	skipbelow					= 0pt,
+	innertopmargin				= 1pt,
+	innerbottommargin			= 1pt,
+	innerleftmargin				= 2pt,
+	innerrightmargin			= 2pt	,
+	roundcorner				= 1pt	
+]
+}{
+	\end{mdframed}	
+	\vspace*{-3pt}
+}
+
+\newenvironment{subsect}{
+\begin{mdframed}[
+	backgroundcolor			= \chosencolor!40,
+	linecolor					= none,
+	leftmargin					= -2pt,
+	rightmargin				= -2pt,
+	skipabove				= 0pt,
+	skipbelow					= 0pt,
+	innertopmargin				= 1pt,
+	innerbottommargin			= 1pt,
+	innerleftmargin				= 2pt,
+	innerrightmargin			= 2pt	,
+	roundcorner				= 1pt	
+]
+}{
+	\end{mdframed}
+	\vspace*{-3pt}
+}		
+
+\newenvironment{subsubsect}{
+\begin{mdframed}[
+	backgroundcolor			= \chosencolor!20,
+	linecolor					= none,
+	leftmargin					= -2pt,
+	rightmargin				= -2pt,
+	skipabove				= 0pt,
+	skipbelow					= 0pt,
+	innertopmargin				= 0.8pt,
+	innerbottommargin			= 0.8pt,
+	innerleftmargin				= 2pt,
+	innerrightmargin			= 2pt	,
+	roundcorner				= 1pt	
+]
+}{
+	\end{mdframed}
+	\vspace*{-3pt}
+}
