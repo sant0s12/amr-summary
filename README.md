@@ -1,3 +1,7 @@
+# Image assets
+This summary contains pictures which I do not own. If you are an ETH student and would like to
+have them, please contact me.
+
 # Disclaimer
 Based on the on work of F. Graube, C. Häberling, J. Mueller, M.Grimm, R. Käslin (SS 2018) and Fabian Blöchiger (SS 2016).
 
